@@ -1,0 +1,1435 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/productos/rapido": {
+      "post": {
+        "description": "Crea un producto con información mínima",
+        "operationId": "ProductosController_crearProductoRapido",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "example": "Producto Ejemplo"
+                  },
+                  "precio_costo": {
+                    "type": "number",
+                    "example": 100
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "precio_costo"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto creado correctamente"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Crear un producto rápido",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos": {
+      "post": {
+        "description": "Crea un producto con toda la información y opcionalmente imágenes",
+        "operationId": "ProductosController_crearProducto",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "example": "Camiseta Algodón"
+                  },
+                  "descripcion": {
+                    "type": "string",
+                    "example": "Camiseta 100% algodón, disponible en varios colores"
+                  },
+                  "precio_costo": {
+                    "type": "number",
+                    "example": 1500
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "example": "Ropa"
+                  },
+                  "stock": {
+                    "type": "number",
+                    "example": 50
+                  },
+                  "sku": {
+                    "type": "string",
+                    "example": "CAM-001"
+                  },
+                  "unidad_id": {
+                    "type": "number",
+                    "example": 1,
+                    "nullable": true
+                  },
+                  "imagenes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Imágenes del producto (máximo 5, formato imagen, 5MB máx. cada una)"
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "precio_costo",
+                  "categoria",
+                  "stock",
+                  "sku"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Producto creado correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Crear un producto completo",
+        "tags": [
+          "productos"
+        ]
+      },
+      "get": {
+        "description": "Obtiene una lista de productos con filtros opcionales",
+        "operationId": "ProductosController_listarProductos",
+        "parameters": [
+          {
+            "name": "categoria",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por categoría",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nombre",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por nombre",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stock_min",
+            "required": false,
+            "in": "query",
+            "description": "Filtrar por stock mínimo",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de productos obtenida correctamente"
+          }
+        },
+        "summary": "Listar productos",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/{id}": {
+      "put": {
+        "description": "Actualiza la información de un producto existente",
+        "operationId": "ProductosController_actualizarProducto",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto a actualizar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "example": "Camiseta Algodón Premium"
+                  },
+                  "descripcion": {
+                    "type": "string",
+                    "example": "Camiseta 100% algodón orgánico"
+                  },
+                  "precio_costo": {
+                    "type": "number",
+                    "example": 1800
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "example": "Ropa Premium"
+                  },
+                  "stock": {
+                    "type": "number",
+                    "example": 30
+                  },
+                  "sku": {
+                    "type": "string",
+                    "example": "CAM-002"
+                  },
+                  "unidad_id": {
+                    "type": "number",
+                    "example": 1,
+                    "nullable": true
+                  },
+                  "activo": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "imagenes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    },
+                    "description": "Imágenes del producto (máximo 5, formato imagen, 5MB máx. cada una)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Producto actualizado correctamente"
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Actualizar un producto",
+        "tags": [
+          "productos"
+        ]
+      },
+      "get": {
+        "description": "Devuelve la información detallada de un producto específico",
+        "operationId": "ProductosController_obtenerProductoPorId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto a consultar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto encontrado"
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          }
+        },
+        "summary": "Obtener un producto por ID",
+        "tags": [
+          "productos"
+        ]
+      },
+      "delete": {
+        "description": "Marca un producto como inactivo (eliminación lógica)",
+        "operationId": "ProductosController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto a eliminar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto eliminado correctamente"
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          }
+        },
+        "summary": "Eliminar un producto",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/inactivos": {
+      "get": {
+        "description": "Obtiene una lista de productos marcados como inactivos",
+        "operationId": "ProductosController_listarInactivos",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de productos inactivos obtenida correctamente"
+          }
+        },
+        "summary": "Listar productos inactivos",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/{id}/reactivar": {
+      "patch": {
+        "description": "Reactiva un producto previamente marcado como inactivo",
+        "operationId": "ProductosController_reactivar",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del producto a reactivar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Producto reactivado correctamente"
+          },
+          "404": {
+            "description": "Producto no encontrado"
+          }
+        },
+        "summary": "Reactivar un producto",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/admin/pedidos": {
+      "get": {
+        "description": "Obtiene una lista de todos los pedidos registrados",
+        "operationId": "ProductosController_obtenerTodosPedidos",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos obtenida correctamente"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Obtener todos los pedidos",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/admin/pedidos/{id}": {
+      "get": {
+        "description": "Obtiene la información detallada de un pedido específico",
+        "operationId": "ProductosController_obtenerPedidoPorId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del pedido a consultar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido encontrado"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          }
+        },
+        "summary": "Obtener un pedido por ID",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/admin/pedidos/{id}/estado": {
+      "patch": {
+        "description": "Actualiza el estado de un pedido existente",
+        "operationId": "ProductosController_actualizarEstadoPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del pedido a actualizar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "estado": {
+                    "type": "string",
+                    "example": "completado"
+                  }
+                },
+                "required": [
+                  "estado"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del pedido actualizado correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          }
+        },
+        "summary": "Actualizar estado de un pedido",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/productos/admin/pedidos/estado/{estado}": {
+      "get": {
+        "description": "Filtra los pedidos según su estado actual",
+        "operationId": "ProductosController_obtenerPedidosPorEstado",
+        "parameters": [
+          {
+            "name": "estado",
+            "required": true,
+            "in": "path",
+            "description": "Estado por el que filtrar los pedidos",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos filtrada correctamente"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Obtener pedidos por estado",
+        "tags": [
+          "productos"
+        ]
+      }
+    },
+    "/catalogo/publico": {
+      "get": {
+        "operationId": "CatalogoController_getCatalogoPublico",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/producto/{id}": {
+      "get": {
+        "operationId": "CatalogoController_obtenerProductoPorId",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/generar-precios-consumidor": {
+      "post": {
+        "operationId": "CatalogoController_generarPrecios",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/descargar/pdf": {
+      "get": {
+        "operationId": "CatalogoController_descargarCatalogoPdf",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/descargar/excel": {
+      "get": {
+        "operationId": "CatalogoController_descargarCatalogoExcel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/visual": {
+      "get": {
+        "operationId": "CatalogoController_getCatalogoVisual",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/producto/{id}/imagen-principal": {
+      "put": {
+        "operationId": "CatalogoController_actualizarImagenPrincipal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/producto/{id}/imagenes": {
+      "post": {
+        "operationId": "CatalogoController_agregarImagenes",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/producto/{id}/imagen": {
+      "delete": {
+        "operationId": "CatalogoController_eliminarImagen",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/catalogo/descargar/catalogo-visual/pdf": {
+      "get": {
+        "operationId": "CatalogoController_descargarCatalogoVisualPDF",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "catalogo"
+        ]
+      }
+    },
+    "/revendedores/lista-precios": {
+      "get": {
+        "operationId": "RevendedoresController_getListaPrecios",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "revendedores"
+        ]
+      }
+    },
+    "/revendedores/catalogo-visual": {
+      "get": {
+        "operationId": "RevendedoresController_getCatalogoVisual",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "revendedores"
+        ]
+      }
+    },
+    "/revendedores/exportar/excel": {
+      "get": {
+        "operationId": "RevendedoresController_exportarExcel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "revendedores"
+        ]
+      }
+    },
+    "/revendedores/catalogo-visual/pdf": {
+      "get": {
+        "operationId": "RevendedoresController_descargarCatalogoVisualPDF",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "revendedores"
+        ]
+      }
+    },
+    "/revendedores/pedido": {
+      "post": {
+        "operationId": "RevendedoresController_registrarPedidoRevendedor",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "revendedores"
+        ]
+      }
+    },
+    "/revendedores/pedidos/{id}/cancelar": {
+      "get": {
+        "operationId": "RevendedoresController_cancelarPedidoRevendedor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "revendedores"
+        ]
+      }
+    },
+    "/usuarios/pedido-consumidor": {
+      "post": {
+        "description": "Registra un nuevo pedido para un consumidor final",
+        "operationId": "UsuariosController_registrarPedidoConsumidor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "example": "Juan Pérez"
+                  },
+                  "email": {
+                    "type": "string",
+                    "example": "juan@example.com"
+                  },
+                  "telefono": {
+                    "type": "string",
+                    "example": "1234567890"
+                  },
+                  "direccion": {
+                    "type": "string",
+                    "example": "Calle Principal 123"
+                  },
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "producto_id": {
+                          "type": "string"
+                        },
+                        "cantidad": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "email",
+                  "items"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido registrado correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Registrar pedido de consumidor final",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/usuarios/pedidos/{id}/cancelar": {
+      "get": {
+        "description": "Cancela un pedido existente por su ID",
+        "operationId": "UsuariosController_cancelarPedido",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del pedido a cancelar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pedido cancelado correctamente"
+          },
+          "400": {
+            "description": "Error al cancelar el pedido"
+          }
+        },
+        "summary": "Cancelar pedido",
+        "tags": [
+          "usuarios"
+        ]
+      }
+    },
+    "/ventas-manuales": {
+      "post": {
+        "description": "Registra una nueva venta manual en el sistema",
+        "operationId": "VentasManualesController_crearVentaManual",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Datos de la venta manual",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVentaManualDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Venta manual creada correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Crear venta manual",
+        "tags": [
+          "ventas-manuales"
+        ]
+      }
+    },
+    "/compras": {
+      "get": {
+        "operationId": "ComprasController_listarCompras",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "compras"
+        ]
+      },
+      "post": {
+        "operationId": "ComprasController_registrarCompra",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "compras"
+        ]
+      }
+    },
+    "/ventas/minoristas": {
+      "post": {
+        "description": "Registra una nueva venta para cliente minorista",
+        "operationId": "MinoristasController_registrarVenta",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Datos de la venta minorista",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVentaMinoristaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Venta registrada correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "500": {
+            "description": "Error interno al registrar la venta"
+          }
+        },
+        "summary": "Registrar venta minorista",
+        "tags": [
+          "minoristas"
+        ]
+      },
+      "get": {
+        "description": "Obtiene todas las ventas minoristas registradas",
+        "operationId": "MinoristasController_obtenerVentas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de ventas minoristas obtenida correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "fecha": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "total": {
+                        "type": "number"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error al obtener ventas"
+          }
+        },
+        "summary": "Obtener ventas minoristas",
+        "tags": [
+          "minoristas"
+        ]
+      }
+    },
+    "/ventas/minoristas/exportar-excel": {
+      "get": {
+        "description": "Genera un archivo Excel con todas las ventas minoristas",
+        "operationId": "MinoristasController_exportarExcel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Archivo Excel generado correctamente"
+          },
+          "500": {
+            "description": "Error al exportar a Excel"
+          }
+        },
+        "summary": "Exportar ventas a Excel",
+        "tags": [
+          "minoristas"
+        ]
+      }
+    },
+    "/ventas/mayoristas": {
+      "post": {
+        "description": "Registra una nueva venta para cliente mayorista",
+        "operationId": "MayoristasController_registrarVenta",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Datos de la venta mayorista",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateVentaMayoristaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Venta registrada correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "500": {
+            "description": "Error interno al registrar la venta"
+          }
+        },
+        "summary": "Registrar venta mayorista",
+        "tags": [
+          "mayoristas"
+        ]
+      },
+      "get": {
+        "description": "Obtiene todas las ventas mayoristas registradas",
+        "operationId": "MayoristasController_obtenerVentas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Lista de ventas mayoristas obtenida correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "fecha": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "total": {
+                        "type": "number"
+                      },
+                      "cliente": {
+                        "type": "object"
+                      },
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error al obtener las ventas mayoristas"
+          }
+        },
+        "summary": "Obtener ventas mayoristas",
+        "tags": [
+          "mayoristas"
+        ]
+      }
+    },
+    "/ventas/mayoristas/exportar-excel": {
+      "get": {
+        "description": "Genera un archivo Excel con todas las ventas mayoristas",
+        "operationId": "MayoristasController_exportarExcel",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Archivo Excel generado correctamente"
+          },
+          "500": {
+            "description": "Error al exportar a Excel"
+          }
+        },
+        "summary": "Exportar ventas a Excel",
+        "tags": [
+          "mayoristas"
+        ]
+      }
+    },
+    "/resumen-economico/calcular": {
+      "get": {
+        "description": "Genera un resumen económico sin guardarlo en la base de datos",
+        "operationId": "ResumenEconomicoController_calcularResumen",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resumen económico calculado correctamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mensaje": {
+                      "type": "string"
+                    },
+                    "resumen": {
+                      "type": "object",
+                      "properties": {
+                        "total_compras": {
+                          "type": "number"
+                        },
+                        "total_ventas": {
+                          "type": "number"
+                        },
+                        "ganancia_total": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error al calcular el resumen económico"
+          }
+        },
+        "summary": "Calcular resumen económico",
+        "tags": [
+          "resumen-economico"
+        ]
+      }
+    },
+    "/resumen-economico/generar": {
+      "post": {
+        "description": "Genera un resumen económico y lo guarda en la base de datos",
+        "operationId": "ResumenEconomicoController_generarYGuardarResumen",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "description": "Datos para la creación del resumen económico",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateResumenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resumen generado y guardado correctamente"
+          },
+          "500": {
+            "description": "Error al generar y guardar el resumen"
+          }
+        },
+        "summary": "Generar y guardar resumen",
+        "tags": [
+          "resumen-economico"
+        ]
+      }
+    },
+    "/resumen-economico": {
+      "get": {
+        "description": "Obtiene todos los resúmenes económicos guardados en la base de datos",
+        "operationId": "ResumenEconomicoController_obtenerTodosLosResumenes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resúmenes económicos obtenidos correctamente"
+          },
+          "500": {
+            "description": "Error al obtener los resúmenes económicos"
+          }
+        },
+        "summary": "Obtener todos los resúmenes",
+        "tags": [
+          "resumen-economico"
+        ]
+      }
+    },
+    "/resumen-economico/ultimo": {
+      "get": {
+        "description": "Obtiene el último resumen económico guardado en la base de datos",
+        "operationId": "ResumenEconomicoController_obtenerResumenMasReciente",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resumen económico más reciente obtenido correctamente"
+          },
+          "500": {
+            "description": "Error al obtener el resumen más reciente"
+          }
+        },
+        "summary": "Obtener el resumen más reciente",
+        "tags": [
+          "resumen-economico"
+        ]
+      }
+    },
+    "/resumen-economico/dashboard": {
+      "get": {
+        "description": "Genera un resumen económico simplificado para mostrar en el dashboard",
+        "operationId": "ResumenEconomicoController_obtenerResumenDashboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resumen rápido obtenido correctamente"
+          },
+          "500": {
+            "description": "Error al obtener el resumen del dashboard"
+          }
+        },
+        "summary": "Obtener resumen para dashboard",
+        "tags": [
+          "resumen-economico"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "API de Mi Tienda",
+    "description": "Documentación de endpoints de Mi Tienda. Incluye soporte para carga de imágenes mediante multipart/form-data en los endpoints de productos.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "productos",
+      "description": "Gestión de productos con soporte para imágenes"
+    },
+    {
+      "name": "ventas-manuales",
+      "description": "Registro de ventas manuales"
+    },
+    {
+      "name": "mayoristas",
+      "description": "Gestión de ventas a mayoristas"
+    },
+    {
+      "name": "minoristas",
+      "description": "Gestión de ventas a minoristas"
+    },
+    {
+      "name": "resumen-economico",
+      "description": "Reportes económicos"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "VentaManualItemDto": {
+        "type": "object",
+        "properties": {
+          "producto_id": {
+            "type": "string",
+            "description": "ID del producto vendido",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "cantidad": {
+            "type": "number",
+            "description": "Cantidad vendida",
+            "example": 2
+          },
+          "precio_unitario": {
+            "type": "number",
+            "description": "Precio unitario del producto",
+            "example": 1200
+          }
+        },
+        "required": [
+          "producto_id",
+          "cantidad",
+          "precio_unitario"
+        ]
+      },
+      "CreateVentaManualDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Total de la venta",
+            "example": 2400
+          },
+          "descripcion": {
+            "type": "string",
+            "description": "Descripción opcional de la venta",
+            "example": "Venta en efectivo"
+          },
+          "items": {
+            "description": "Items incluidos en la venta",
+            "example": [
+              {
+                "producto_id": "550e8400-e29b-41d4-a716-446655440000",
+                "cantidad": 2,
+                "precio_unitario": 1200
+              }
+            ],
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VentaManualItemDto"
+            }
+          }
+        },
+        "required": [
+          "total",
+          "items"
+        ]
+      },
+      "CreateVentaMinoristaDto": {
+        "type": "object",
+        "properties": {
+          "producto_id": {
+            "type": "string",
+            "description": "ID del producto vendido",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "cantidad": {
+            "type": "number",
+            "description": "Cantidad vendida",
+            "example": 2
+          },
+          "precio_venta": {
+            "type": "number",
+            "description": "Precio de venta por unidad",
+            "example": 1200
+          },
+          "nombre_comprador": {
+            "type": "string",
+            "description": "Nombre del comprador minorista",
+            "example": "Juan Pérez"
+          },
+          "metodo_pago": {
+            "type": "string",
+            "description": "Método de pago utilizado",
+            "example": "Efectivo"
+          },
+          "notas": {
+            "type": "string",
+            "description": "Notas adicionales sobre la venta",
+            "example": "Cliente frecuente"
+          },
+          "factura": {
+            "type": "boolean",
+            "description": "Indica si se requiere factura",
+            "example": false
+          }
+        },
+        "required": [
+          "producto_id",
+          "cantidad",
+          "precio_venta",
+          "nombre_comprador"
+        ]
+      },
+      "CreateVentaMayoristaDto": {
+        "type": "object",
+        "properties": {
+          "producto_id": {
+            "type": "string",
+            "description": "ID del producto vendido",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "cantidad": {
+            "type": "number",
+            "description": "Cantidad vendida",
+            "example": 5
+          },
+          "precio_venta": {
+            "type": "number",
+            "description": "Precio de venta por unidad",
+            "example": 1500
+          },
+          "nombre_tienda": {
+            "type": "string",
+            "description": "Nombre de la tienda o cliente mayorista",
+            "example": "Distribuidora XYZ"
+          },
+          "metodo_pago": {
+            "type": "string",
+            "description": "Método de pago utilizado",
+            "example": "Transferencia"
+          },
+          "notas": {
+            "type": "string",
+            "description": "Notas adicionales sobre la venta",
+            "example": "Entrega programada para el lunes"
+          },
+          "factura": {
+            "type": "boolean",
+            "description": "Indica si se requiere factura",
+            "example": true
+          }
+        },
+        "required": [
+          "producto_id",
+          "cantidad",
+          "precio_venta",
+          "nombre_tienda"
+        ]
+      },
+      "CreateResumenDto": {
+        "type": "object",
+        "properties": {
+          "notas": {
+            "type": "string",
+            "description": "Notas opcionales para el resumen",
+            "example": "Resumen del primer trimestre"
+          },
+          "fecha_desde": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Fecha desde la cual filtrar datos"
+          },
+          "fecha_hasta": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Fecha hasta la cual filtrar datos"
+          }
+        }
+      }
+    }
+  }
+}
