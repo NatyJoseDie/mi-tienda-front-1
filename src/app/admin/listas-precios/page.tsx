@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Producto } from '@/types/producto';
 import ProductForm from '@/components/products/ProductForm';
 import Modal from '@/components/products/Modal';
+import AjustePrecioCosto from '../productos/AjustePrecioCosto';
 
 const STOCK_CRITICO = 5;
 
@@ -105,6 +106,10 @@ export default function AdminListasPrecios() {
     <div className="container mx-auto py-8">
       <h2 className="text-2xl font-bold mb-6">Lista de Precios</h2>
 
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+        <AjustePrecioCosto onAjusteGuardado={fetchProductos} />
+      </div>
+
       <div className="mb-4 flex justify-between items-center">
         <input
           type="text"
@@ -131,6 +136,7 @@ export default function AdminListasPrecios() {
                 <th className="px-4 py-2">Nombre</th>
                 <th className="px-4 py-2">SKU</th>
                 <th className="px-4 py-2">Precio de Costo</th>
+                <th className="px-4 py-2 text-indigo-700 bg-indigo-50">Costo Ajustado</th>
                 <th className="px-4 py-2">Stock</th>
                 <th className="px-4 py-2">Descripción corta</th>
                 <th className="px-4 py-2">Acciones</th>
@@ -154,6 +160,7 @@ export default function AdminListasPrecios() {
                   <td className="px-4 py-2 font-medium">{prod.nombre}</td>
                   <td className="px-4 py-2">{prod.sku || '-'}</td>
                   <td className="px-4 py-2">${prod.precio_costo?.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</td>
+                  <td className="px-4 py-2 font-bold bg-gray-100">${prod.precio_costo_ajustado?.toLocaleString('es-AR', { minimumFractionDigits: 2 }) ?? 'N/A'}</td>
                   <td className="px-4 py-2">
                     {prod.stock}
                     {prod.stock <= STOCK_CRITICO && (

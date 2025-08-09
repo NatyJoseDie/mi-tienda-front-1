@@ -22,14 +22,15 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
   const allImages = [product.imagen_principal, ...(product.imagenes || [])].filter(Boolean) as string[];
 
   const handleAddToCart = () => {
-    // Aseguramos que el producto tenga la estructura completa antes de añadirlo
-    const productToAdd: Producto = {
-      ...product,
-      quantity: 1,
-    };
-    addToCart(productToAdd);
-    alert(`${product.nombre} ha sido agregado al carrito.`);
+    // Solución 1: No se añade 'quantity' aquí. 
+    // La lógica de la cantidad la debe manejar el contexto del carrito.
+    addToCart(product);
+    alert(`${product.nombre} ha sido añadido al carrito.`);
   };
+
+  if (!product) {
+    return <div>Producto no encontrado</div>;
+  }
 
   const hasValidPrice = typeof product.precio_final === 'number' && product.precio_final > 0;
 
@@ -70,15 +71,10 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
 
           {/* Precio */}
           <div className="mt-4">
-            {hasValidPrice ? (
-              <span className="text-3xl font-bold text-indigo-600">
-                ${product.precio_final.toLocaleString('es-AR')}
-              </span>
-            ) : (
-              <span className="text-2xl text-gray-500">
-                Precio no disponible
-              </span>
-            )}
+            <span className="text-3xl font-bold text-gray-900">
+              {/* Solución 2: Añadimos '?? 0' para dar un valor por defecto */}
+              ${(product.precio_final ?? 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
           </div>
 
           {/* Descripción */}

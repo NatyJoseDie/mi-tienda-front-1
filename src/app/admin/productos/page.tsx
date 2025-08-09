@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Producto } from '@/types/producto';
+import EditarProductoModal from '@/components/EditarProductoModal';
 
 const STOCK_CRITICO = 5;
 
@@ -22,6 +23,10 @@ export default function AdminProductos() {
   const [porcentajesTemp, setPorcentajesTemp] = useState<{ [key: string]: number }>({});
   const [isUpdatingPorcentaje, setIsUpdatingPorcentaje] = useState(false);
 
+  // Estados para el modal de edición
+  const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
+  const [productoAEditar, setProductoAEditar] = useState<Producto | null>(null);
+
   const [filtros, setFiltros] = useState({
     busqueda: '',
     categoria_id: '',
@@ -33,6 +38,28 @@ export default function AdminProductos() {
   });
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
+
+  // Función para abrir el modal de edición
+  const abrirModalEditar = (producto: Producto) => {
+    console.log('🔍 Abriendo modal para producto:', producto.nombre);
+    setProductoAEditar(producto);
+    setModalEditarAbierto(true);
+  };
+
+  // Función para cerrar el modal de edición
+  const cerrarModalEditar = () => {
+    console.log('❌ Cerrando modal de edición');
+    setModalEditarAbierto(false);
+    setProductoAEditar(null);
+  };
+
+  // Función para manejar la actualización del producto
+  const handleProductoActualizado = (productoActualizado: Producto) => {
+    console.log('✅ Producto actualizado:', productoActualizado.nombre);
+    setProductos(prev => 
+      prev.map(p => p.id === productoActualizado.id ? { ...p, ...productoActualizado } : p)
+    );
+  };
 
   const agruparProductosPorCategoria = () => {
     const grupos: { [key: string]: { categoria: any; productos: Producto[] } } = {};
@@ -71,7 +98,9 @@ export default function AdminProductos() {
 
   const calcularPrecioFinal = (producto: Producto) => {
     const porcentaje = producto.porcentaje_aplicado || 45;
-    return (producto.precio_costo || 0) * (1 + porcentaje / 100);
+    // Usamos el costo ajustado como base. Si no existe, usamos el costo original como fallback.
+    const baseCosto = producto.precio_costo_ajustado ?? producto.precio_costo ?? 0;
+    return baseCosto * (1 + porcentaje / 100);
   };
 
   const fetchCategorias = async () => {
@@ -195,8 +224,9 @@ export default function AdminProductos() {
   };
 
   const calcularPrecioTemporal = (producto: Producto, porcentajeTemp: number) => {
-    if (!producto.precio_costo) return producto.precio_final || 0;
-    return producto.precio_costo * (1 + porcentajeTemp / 100);
+    // Usamos el costo ajustado como base. Si no existe, usamos el costo original como fallback.
+    const baseCosto = producto.precio_costo_ajustado ?? producto.precio_costo ?? 0;
+    return baseCosto * (1 + porcentajeTemp / 100);
   };
 
   const handleUpdatePorcentaje = async (id: string, nuevoPorcentaje: number) => {
@@ -223,20 +253,17 @@ export default function AdminProductos() {
     }
   };
 
-  // Agregar esta función que falta
   const handlePorcentajeChange = (productId: string, increment: number) => {
     const currentPorcentaje = porcentajesTemp[productId] ?? 
       productos.find(p => p.id === productId)?.porcentaje_aplicado ?? 45;
     
     const newPorcentaje = Math.max(0, Math.min(1000, currentPorcentaje + increment));
     
-    // Actualizar porcentaje temporal para feedback inmediato en la UI
     setPorcentajesTemp(prev => ({
       ...prev,
       [productId]: newPorcentaje
     }));
     
-    // Debounce de la llamada a la API
     clearTimeout((window as any)[`timeout_${productId}`]);
     (window as any)[`timeout_${productId}`] = setTimeout(() => {
       handleUpdatePorcentaje(productId, newPorcentaje);
@@ -451,6 +478,7 @@ export default function AdminProductos() {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📈 % Ganancia</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">💵 Precio Final</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">🔄 Estado</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📝 Acciones</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
@@ -500,7 +528,8 @@ export default function AdminProductos() {
                         </td>
                         <td className="px-6 py-4">
                           <span className="text-base font-semibold text-gray-800 bg-yellow-50 px-3 py-2 rounded-lg border border-yellow-200">
-                            💲 ${prod.precio_costo?.toLocaleString() ?? 'N/A'}
+                            {/* Mostramos el costo ajustado aquí */}
+                            💲 ${(prod.precio_costo_ajustado ?? prod.precio_costo)?.toLocaleString() ?? 'N/A'}
                           </span>
                         </td>
                         <td className="px-6 py-4">
@@ -548,6 +577,17 @@ export default function AdminProductos() {
                             {prod.activo ? '🟢 Activo' : '🔴 Inactivo'}
                           </span>
                         </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => abrirModalEditar(prod)}
+                              className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-1"
+                              title="Editar producto"
+                            >
+                              ✏️ Editar
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -557,6 +597,14 @@ export default function AdminProductos() {
           ))}
         </div>
       )}
+
+      {/* Modal de edición */}
+      <EditarProductoModal
+        abierto={modalEditarAbierto}
+        onClose={cerrarModalEditar}
+        producto={productoAEditar}
+        onGuardar={handleProductoActualizado}
+      />
     </div>
   );
 }
