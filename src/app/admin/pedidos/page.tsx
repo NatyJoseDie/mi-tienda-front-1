@@ -60,6 +60,8 @@ export default function AdminPedidos() {
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [estadoParaVideo, setEstadoParaVideo] = useState<string>('');
   const [pedidoParaVideo, setPedidoParaVideo] = useState<string>('');
+  // Mapa de toggles por pedido para habilitar entrega manual/externa
+  const [entregaManualMap, setEntregaManualMap] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     cargarPedidos();
@@ -85,10 +87,14 @@ export default function AdminPedidos() {
   const actualizarEstado = async (pedidoId: string, nuevoEstado: string) => {
     try {
       setActualizandoEstado(pedidoId);
+      const body: any = { estado: nuevoEstado };
+      if (nuevoEstado === 'entregado' && entregaManualMap[pedidoId]) {
+        body.entrega_manual = true;
+      }
       const response = await fetch(`${API_URL}/productos/admin/pedidos/${pedidoId}/estado`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estado: nuevoEstado })
+        body: JSON.stringify(body)
       });
 
       if (response.ok) {
@@ -97,7 +103,7 @@ export default function AdminPedidos() {
       } else {
         const text = await response.text().catch(() => '');
         console.error('Actualizar estado (sin video) fallo:', { status: response.status, text });
-        alert(`❌ Error al actualizar el pedido (HTTP ${response.status})`);
+        alert(`❌ Error (HTTP ${response.status}): ${text || 'No se pudo actualizar el pedido'}`);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -318,13 +324,27 @@ export default function AdminPedidos() {
                         
                         {pedido.estado !== 'entregado' && pedido.estado !== 'cancelado' && (
                           <div className="flex flex-col gap-1">
+                            {/* Entrega manual/externa: solo relevante al intentar pasar a 'entregado' si está 'enviado' */}
+                            <label className="flex items-center gap-2 text-xs text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={!!entregaManualMap[pedido.id]}
+                                onChange={(e) => setEntregaManualMap((prev) => ({ ...prev, [pedido.id]: e.target.checked }))}
+                              />
+                              Entrega manual/externa
+                            </label>
                             {/* Cambiar estado sin video */}
                             <select
                               value=""
                               onChange={(e) => {
-                                if (e.target.value) {
-                                  actualizarEstado(pedido.id, e.target.value);
+                                const next = e.target.value as Pedido['estado'] | '';
+                                if (!next) return;
+                                // Bloqueo: si actual es 'enviado', no permitir 'entregado' salvo toggle
+                                if (pedido.estado === 'enviado' && next === 'entregado' && !entregaManualMap[pedido.id]) {
+                                  alert('Este pedido fue enviado y solo el cliente puede confirmar la recepción desde el email. Para forzar una entrega externa, activa "Entrega manual/externa".');
+                                  return;
                                 }
+                                actualizarEstado(pedido.id, next);
                               }}
                               disabled={actualizandoEstado === pedido.id}
                               className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
@@ -332,6 +352,11 @@ export default function AdminPedidos() {
                               <option value="">🔄 Sin video</option>
                               {Object.entries(estadoConfig)
                                 .filter(([estado]) => estado !== pedido.estado)
+                                .filter(([estado]) => {
+                                  // Ocultar 'entregado' si el pedido está 'enviado' y no está habilitada entrega manual
+                                  if (pedido.estado === 'enviado' && estado === 'entregado' && !entregaManualMap[pedido.id]) return false;
+                                  return true;
+                                })
                                 .map(([estado, config]) => (
                                   <option key={estado} value={estado}>{config.label}</option>
                                 ))}
@@ -341,21 +366,20 @@ export default function AdminPedidos() {
                             <select
                               value=""
                               onChange={(e) => {
-                                if (e.target.value) {
-                                  setPedidoParaVideo(pedido.id);
-                                  setEstadoParaVideo(e.target.value);
-                                  setShowVideoModal(true);
-                                }
+                                const next = e.target.value;
+                                if (!next) return;
+                                setPedidoParaVideo(pedido.id);
+                                setEstadoParaVideo(next);
+                                setShowVideoModal(true);
                               }}
                               disabled={actualizandoEstado === pedido.id}
                               className="text-xs border border-green-300 rounded px-2 py-1 focus:ring-2 focus:ring-green-500 bg-green-50"
                             >
                               <option value="">📹 Con video</option>
-                              {Object.entries(estadoConfig)
-                                .filter(([estado]) => estado !== pedido.estado)
-                                .map(([estado, config]) => (
-                                  <option key={estado} value={estado}>📹 {config.label}</option>
-                                ))}
+                              {/* Solo permitir flujo con video para pasar a 'enviado' */}
+                              {pedido.estado !== 'enviado' && (
+                                <option value="enviado">📹 {estadoConfig['enviado'].label}</option>
+                              )}
                             </select>
                           </div>
                         )}
