@@ -523,8 +523,9 @@ export default function AdminVentasMinoristas() {
              <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                <h3 className="text-lg font-semibold text-gray-800 mb-4">🛒 Productos en el Carrito</h3>
                
-               <div className="overflow-x-auto">
-                 <table className="w-full border-collapse border border-gray-300">
+               {/* Vista de tabla para desktop */}
+               <div className="hidden md:block overflow-x-auto">
+                 <table className="w-full border-collapse border border-gray-300 min-w-[768px]">
                    <thead>
                      <tr className="bg-gray-100">
                        <th className="border border-gray-300 p-2 text-left">Producto</th>
@@ -557,6 +558,41 @@ export default function AdminVentasMinoristas() {
                      ))}
                    </tbody>
                  </table>
+               </div>
+
+               {/* Vista de tarjetas para móvil */}
+               <div className="md:hidden space-y-3">
+                 {carritoProductos.map((item, index) => (
+                   <div key={index} className="bg-white border border-gray-300 rounded-lg p-3">
+                     <div className="flex justify-between items-start mb-2">
+                       <div className="font-medium text-gray-900">{item.producto.nombre}</div>
+                       <button
+                         onClick={() => quitarDelCarrito(index)}
+                         className="text-red-500 hover:text-red-700 font-medium text-sm"
+                       >
+                         Quitar
+                       </button>
+                     </div>
+                     <div className="grid grid-cols-2 gap-2 text-sm">
+                       <div>
+                         <span className="text-gray-600">Cantidad:</span>
+                         <span className="ml-1 font-medium">{item.cantidad}</span>
+                       </div>
+                       <div>
+                         <span className="text-gray-600">Precio Unit.:</span>
+                         <span className="ml-1 font-medium">${item.precio_venta.toLocaleString()}</span>
+                       </div>
+                       <div>
+                         <span className="text-gray-600">Subtotal:</span>
+                         <span className="ml-1 font-medium">${item.subtotal.toLocaleString()}</span>
+                       </div>
+                       <div>
+                         <span className="text-gray-600">Ganancia:</span>
+                         <span className="ml-1 font-medium text-green-600">${item.ganancia.toLocaleString()}</span>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
                </div>
 
                {/* Totales del Carrito */}
@@ -640,8 +676,10 @@ export default function AdminVentasMinoristas() {
           {ventas.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No hay ventas registradas</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
+            <>
+              {/* Vista de tabla para desktop */}
+              <div className="hidden md:block overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300 min-w-[900px]">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 p-2 text-left">Fecha</th>
@@ -678,6 +716,44 @@ export default function AdminVentasMinoristas() {
                 </tbody>
               </table>
             </div>
+
+              {/* Vista de tarjetas para móvil */}
+              <div className="md:hidden space-y-4">
+              {ventas.map((venta) => (
+                <div key={venta.id} className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="font-medium text-gray-900">{venta.productos?.nombre || 'Desconocido'}</div>
+                      <div className="text-sm text-gray-500">{new Date(venta.fecha).toLocaleDateString()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">${(venta.cantidad * venta.precio_venta).toFixed(2)}</div>
+                      <div className="text-sm text-gray-500">{venta.factura ? '📄 Con factura' : 'Sin factura'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-600">Cantidad:</span>
+                      <span className="ml-1 font-medium">{venta.cantidad}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Precio Unit.:</span>
+                      <span className="ml-1 font-medium">${venta.precio_venta}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Comprador:</span>
+                      <span className="ml-1 font-medium">{venta.nombre_comprador}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Método Pago:</span>
+                      <span className="ml-1 font-medium">{venta.metodo_pago || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              </div>
+            </>
           )}
         </div>
       )}

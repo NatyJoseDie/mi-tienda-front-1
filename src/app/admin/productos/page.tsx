@@ -111,6 +111,7 @@ export default function AdminProductos() {
       const res = await fetch(`${API_URL}/categorias`, {
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Incluir cookies para autenticación
       });
       console.log('📡 Respuesta recibida:', res.status, res.ok);
       if (!res.ok) throw new Error('Error al cargar las categorías');
@@ -520,18 +521,19 @@ export default function AdminProductos() {
                 📦 {grupo.categoria.nombre}
               </h2>
               <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-                <table className="w-full table-auto">
-                  <thead className="bg-gradient-to-r from-indigo-600 to-purple-600">
-                    <tr>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📋 Producto</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📊 Stock</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">💰 Precio Costo</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📈 % Ganancia</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">💵 Precio Final</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">🔄 Estado</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📝 Acciones</th>
-                    </tr>
-                  </thead>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[800px] table-auto">
+                    <thead className="bg-gradient-to-r from-indigo-600 to-purple-600">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📋 Producto</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📊 Stock</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">💰 Precio Costo</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📈 % Ganancia</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">💵 Precio Final</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">🔄 Estado</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-white uppercase tracking-wider">📝 Acciones</th>
+                      </tr>
+                    </thead>
                   <tbody className="bg-white divide-y divide-gray-100">
                     {grupo.productos.map((prod, index) => (
                       <tr key={prod.id} className={`transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:shadow-md ${
@@ -642,7 +644,88 @@ export default function AdminProductos() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                  </table>
+                </div>
+                
+                {/* Versión responsive para móviles - Cards */}
+                <div className="md:hidden space-y-4">
+                  {grupo.productos.map((prod) => (
+                    <div key={prod.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-16 h-16 flex-shrink-0">
+                          {prod.imagen_principal ? (
+                            <img 
+                              src={prod.imagen_principal} 
+                              alt={prod.nombre}
+                              className="w-full h-full object-cover rounded-lg border border-gray-200"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                const fallback = target.nextElementSibling as HTMLElement;
+                                target.style.display = 'none';
+                                if (fallback) {
+                                  fallback.style.display = 'flex';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div className={`w-full h-full bg-gradient-to-b from-indigo-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-sm ${prod.imagen_principal ? 'hidden' : 'flex'}`}>
+                            📦
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 mb-1">{prod.nombre}</h3>
+                          <p className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block">
+                            🏷️ SKU: {prod.sku || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                        <div>
+                          <span className="text-gray-600">Stock:</span>
+                          <span className={`ml-1 font-bold ${prod.stock <= 10 ? 'text-red-600' : 'text-green-600'}`}>
+                            {prod.stock}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Estado:</span>
+                          <span className={`ml-1 font-bold ${prod.activo ? 'text-green-600' : 'text-red-600'}`}>
+                            {prod.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Costo:</span>
+                          <span className="ml-1 font-bold text-gray-900">
+                            ${(prod.precio_costo_ajustado ?? prod.precio_costo)?.toLocaleString() ?? 'N/A'}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Ganancia:</span>
+                          <span className="ml-1 font-bold text-blue-600">
+                            {(porcentajesTemp[prod.id] ?? prod.porcentaje_aplicado ?? 45).toFixed(1)}%
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-3">
+                        <span className="text-gray-600 text-sm">Precio Final:</span>
+                        <span className="ml-1 text-lg font-bold text-green-700">
+                          ${(porcentajesTemp[prod.id] 
+                            ? calcularPrecioTemporal(prod, porcentajesTemp[prod.id])
+                            : calcularPrecioFinal(prod)
+                          ).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      
+                      <button
+                        onClick={() => abrirModalEditar(prod)}
+                        className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium transition-colors"
+                      >
+                        ✏️ Editar
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ))}

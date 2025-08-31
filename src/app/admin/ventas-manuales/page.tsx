@@ -305,9 +305,9 @@ export default function AdminVentasManuales() {
         </label>
       </div>
 
-      {/* Items */}
-      <div className="mb-4 overflow-x-auto">
-        <table className="w-full text-sm">
+      {/* Items - Vista de tabla para desktop */}
+      <div className="mb-4 hidden md:block overflow-x-auto">
+        <table className="w-full text-sm min-w-[900px]">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-3 py-2 text-left">Producto</th>
@@ -465,6 +465,162 @@ export default function AdminVentasManuales() {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Items - Vista de tarjetas para móvil */}
+      <div className="mb-4 md:hidden space-y-4">
+        {items.map((it, idx) => {
+          const prod = productos.find((p) => p.id === it.producto_id);
+          const subtotal = (Number(it.cantidad) || 0) * (Number(it.precio_venta) || 0);
+          return (
+            <div key={it.idRow} className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="checkbox"
+                      checked={it.esPersonalizado}
+                      onChange={(e) => {
+                        const newItems = [...items];
+                        const item = newItems[idx];
+                        if (item) {
+                          item.esPersonalizado = e.target.checked;
+                          if (e.target.checked) {
+                            item.producto_id = '';
+                            item.nombre_producto_personalizado = '';
+                            item.precio_costo_personalizado = 0;
+                            item.precio_venta = 0;
+                          } else {
+                            item.nombre_producto_personalizado = undefined;
+                            item.precio_costo_personalizado = undefined;
+                            item.producto_id = '';
+                            item.precio_venta = 0;
+                          }
+                        }
+                        setItems(newItems);
+                      }}
+                      className="h-4 w-4"
+                    />
+                    <span className="text-sm font-medium">Producto personalizado</span>
+                  </div>
+                  
+                  {it.esPersonalizado ? (
+                    <input
+                      type="text"
+                      value={it.nombre_producto_personalizado || ''}
+                      onChange={(e) => {
+                        const newItems = [...items];
+                        const item = newItems[idx];
+                        if (item) {
+                          item.nombre_producto_personalizado = e.target.value;
+                          item.producto_id = '';
+                        }
+                        setItems(newItems);
+                      }}
+                      placeholder="Nombre del producto personalizado"
+                      className="w-full border rounded px-2 py-1"
+                      disabled={enviando}
+                    />
+                  ) : (
+                    <select
+                      disabled={loadingProductos || enviando}
+                      value={it.producto_id}
+                      onChange={(e) => onChangeProducto(idx, e.target.value)}
+                      className="w-full border rounded px-2 py-1"
+                    >
+                      <option value="">Seleccionar producto...</option>
+                      {productos.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => quitarItem(it.idRow)}
+                  className="ml-2 text-red-600 hover:bg-red-50 p-2 rounded"
+                  disabled={items.length === 1 || enviando}
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                  <div className="text-sm text-gray-600">{!it.esPersonalizado ? (prod?.stock ?? '-') : '-'}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={it.cantidad}
+                    onChange={(e) => actualizarItem(it.idRow, { cantidad: Number(e.target.value) })}
+                    className="w-full border rounded px-2 py-1"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precios</label>
+                <div className="space-y-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={it.precio_venta === 0 ? '0' : (it.precio_venta || '')}
+                    onChange={(e) => actualizarItem(it.idRow, { 
+                      precio_venta: Number(e.target.value) || 0 
+                    })}
+                    className="w-full border rounded px-2 py-1"
+                    placeholder="Precio de venta"
+                  />
+                  {it.esPersonalizado && (
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={it.precio_costo_personalizado || ''}
+                      onChange={(e) => {
+                        const newItems = [...items];
+                        const item = newItems.find(i => i.idRow === it.idRow);
+                        if (item) {
+                          item.precio_costo_personalizado = Number(e.target.value) || 0;
+                        }
+                        setItems(newItems);
+                      }}
+                      className="w-full border rounded px-2 py-1"
+                      placeholder="Precio de costo"
+                    />
+                  )}
+                  {!it.esPersonalizado && prod && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const precioVenta = calcularPrecioFinal(prod);
+                        actualizarItem(it.idRow, { 
+                          precio_venta: precioVenta
+                        });
+                      }}
+                      className="text-xs text-blue-600 hover:underline"
+                      title="Usar precio calculado"
+                    >
+                      usar calculado
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center pt-2 border-t">
+                <span className="text-sm font-medium text-gray-700">Subtotal:</span>
+                <span className="font-semibold">${subtotal.toLocaleString('es-AR')}</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-3 mb-6">

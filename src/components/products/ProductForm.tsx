@@ -7,7 +7,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 interface ProductFormProps {
   initialData?: Partial<Producto>;
   onSubmitAction: (data: any) => void;
-  onCancel: () => void;
+  onCancelAction: () => void;
   loading?: boolean;
 }
 
@@ -18,7 +18,7 @@ interface Categoria {
   activo: boolean;
 }
 
-export default function ProductForm({ initialData = {}, onSubmitAction, onCancel, loading = false }: ProductFormProps) {
+export default function ProductForm({ initialData = {}, onSubmitAction, onCancelAction, loading = false }: ProductFormProps) {
   const [nombre, setNombre] = useState(initialData.nombre || '');
   const [descripcion, setDescripcion] = useState(initialData.descripcion || '');
   // Asegurar que siempre sea un número, no null
@@ -434,7 +434,7 @@ export default function ProductForm({ initialData = {}, onSubmitAction, onCancel
         <button 
           type="button" 
           className="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-50" 
-          onClick={onCancel} 
+          onClick={onCancelAction} 
           disabled={isLoading}
         >
           Cancelar

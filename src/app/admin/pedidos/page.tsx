@@ -285,8 +285,9 @@ export default function AdminPedidos() {
 
       {/* Lista de Pedidos */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        {/* Vista de tabla para desktop */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full min-w-[768px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-500">Pedido</th>
@@ -413,6 +414,59 @@ export default function AdminPedidos() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Vista de tarjetas para móvil */}
+        <div className="md:hidden">
+          {pedidosFiltrados.map((pedido) => {
+            const config = estadoConfig[pedido.estado];
+            const Icon = config.icon;
+            
+            return (
+              <div key={pedido.id} className="border-b border-gray-200 p-4 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      Pedido #{pedido.id.slice(-8)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {pedido.pedido_items?.length || 0} items • {formatearFecha(pedido.fecha)}
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${config.color}`}>
+                    <Icon className="w-3 h-3 mr-1" />
+                    {config.label}
+                  </span>
+                </div>
+                
+                <div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {pedido.observaciones?.nombre || 'Sin nombre'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {pedido.observaciones?.email || 'Sin email'}
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <div className="text-lg font-bold text-gray-900">
+                    ${(pedido.total_calculado || pedido.total || 0).toLocaleString('es-AR')}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setPedidoSeleccionado(pedido);
+                        setShowModal(true);
+                      }}
+                      className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      Ver detalles
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {pedidosFiltrados.length === 0 && (

@@ -300,8 +300,9 @@ export default function AdminCompras() {
             Actualizar
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        {/* Vista de tabla para desktop */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-sm min-w-[768px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left font-medium text-gray-600">Fecha</th>
@@ -344,6 +345,53 @@ export default function AdminCompras() {
               })}
             </tbody>
           </table>
+        </div>
+
+        {/* Vista de tarjetas para móvil */}
+        <div className="md:hidden space-y-4 p-4">
+          {compras.length === 0 ? (
+            <div className="text-center text-gray-500 py-8">
+              {cargandoCompras ? 'Cargando…' : 'Sin compras registradas'}
+            </div>
+          ) : (
+            compras.map((c) => {
+              const total = (c.compra_items || []).reduce(
+                (acc, it) => acc + Number(it.cantidad || 0) * Number(it.precio_unitario || 0),
+                0
+              );
+              return (
+                <div key={c.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium text-gray-900">{c.proveedor}</div>
+                      <div className="text-sm text-gray-500">{new Date(c.fecha).toLocaleString('es-AR')}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-lg">${total.toLocaleString('es-AR')}</div>
+                    </div>
+                  </div>
+                  
+                  {c.observaciones && (
+                    <div>
+                      <div className="text-sm font-medium text-gray-700">Observaciones:</div>
+                      <div className="text-sm text-gray-600">{c.observaciones}</div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <div className="text-sm font-medium text-gray-700 mb-2">Ítems:</div>
+                    <div className="space-y-1">
+                      {(c.compra_items || []).map((ci, idx) => (
+                        <div key={idx} className="text-sm text-gray-600 bg-white rounded px-2 py-1">
+                          {ci.productos?.nombre || ci.producto_id || 'Producto'} × {ci.cantidad} @ ${ci.precio_unitario}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </div>

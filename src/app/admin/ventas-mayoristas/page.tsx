@@ -269,8 +269,10 @@ export default function AdminVentasMayoristas() {
           {ventas.length === 0 ? (
             <p className="text-gray-500 text-center py-4">No hay ventas registradas</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
+            <>
+              {/* Vista de tabla para desktop */}
+              <div className="hidden md:block overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300 min-w-[900px]">
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 p-2 text-left">Fecha</th>
@@ -299,6 +301,44 @@ export default function AdminVentasMayoristas() {
                 </tbody>
               </table>
             </div>
+
+              {/* Vista de tarjetas para móvil */}
+              <div className="md:hidden space-y-4">
+              {ventas.map((v) => (
+                <div key={v.id} className="bg-gray-50 border border-gray-300 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <div className="font-medium text-gray-900">{v.productos?.nombre || 'Desconocido'}</div>
+                      <div className="text-sm text-gray-500">{new Date(v.fecha).toLocaleDateString()}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">${(v.cantidad * v.precio_venta).toLocaleString()}</div>
+                      <div className="text-sm text-gray-500">{v.factura ? '📄 Con factura' : 'Sin factura'}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-gray-600">Cantidad:</span>
+                      <span className="ml-1 font-medium">{v.cantidad}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Precio Unit.:</span>
+                      <span className="ml-1 font-medium">${v.precio_venta.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Tienda:</span>
+                      <span className="ml-1 font-medium">{v.nombre_tienda}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Método Pago:</span>
+                      <span className="ml-1 font-medium">{v.metodo_pago || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              </div>
+            </>
           )}
         </div>
       )}
