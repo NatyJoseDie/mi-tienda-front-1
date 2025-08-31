@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import { CreditCardIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
 // Solo disponible en modo desarrollo
-if (process.env.NEXT_PUBLIC_DEV_MODE !== 'true') {
+const isDevMode = process.env.NODE_ENV === 'development' || process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+
+if (!isDevMode && typeof window !== 'undefined') {
+  // Solo mostrar error en el cliente, no durante el build
   throw new Error('Esta página solo está disponible en modo desarrollo');
 }
 
