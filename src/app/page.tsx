@@ -46,7 +46,7 @@ export default function HomePage() {
   return (
     <main>
       {/* Hero Section */}
-      <section className="relative h-[85vh] flex items-center justify-center text-white">
+      <section className="relative h-[60vh] md:h-[85vh] flex items-center justify-center text-white">
         <Image
           src="https://images.unsplash.com/photo-1511289081-d06dda19034d?q=80&w=2070&auto=format&fit=crop"
           alt="Fondo de tecnología"

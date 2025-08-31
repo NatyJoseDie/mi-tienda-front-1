@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/hooks/useAuth';
-import { FiShoppingCart, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
 const Header = () => {
   const { cartItems } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -71,8 +72,8 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Carrito de Compras */}
-          <div className="flex items-center">
+          {/* Carrito de Compras y Menú Móvil */}
+          <div className="flex items-center space-x-4">
             <Link href="/carrito" className="relative text-gray-500 hover:text-gray-900 transition-colors">
               <FiShoppingCart className="h-6 w-6" />
               {isClient && totalItems > 0 && (
@@ -81,9 +82,112 @@ const Header = () => {
                 </span>
               )}
             </Link>
+            
+            {/* Botón de menú móvil */}
+            <button
+              className="md:hidden text-gray-500 hover:text-gray-900 transition-colors"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
+            </button>
           </div>
         </div>
       </div>
+      
+      {/* Menú móvil desplegable */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-gray-200 shadow-lg">
+          <div className="px-4 py-2 space-y-1">
+            <Link 
+              href="/" 
+              className="block px-3 py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Inicio
+            </Link>
+            <Link 
+              href="/catalogo" 
+              className="block px-3 py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Catálogo
+            </Link>
+            <Link 
+              href="/paquetes" 
+              className="block px-3 py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Planes
+            </Link>
+            <Link 
+              href="/registro-revendedor" 
+              className="block px-3 py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Convertite en Revendedor
+            </Link>
+            <Link 
+              href="/solicitar-codigo" 
+              className="block px-3 py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Solicitar Código
+            </Link>
+            <Link 
+              href="/contacto" 
+              className="block px-3 py-2 text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Contacto
+            </Link>
+            
+            {/* Opciones de usuario en móvil */}
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              {isClient && isAuthenticated && user ? (
+                <div className="space-y-1">
+                  <div className="px-3 py-2 text-sm text-gray-700">
+                    <div className="font-medium">{user.nombre} {user.apellido}</div>
+                    <div className="text-gray-500">({user.tipo})</div>
+                  </div>
+                  <Link 
+                    href={user.tipo === 'admin' ? '/admin' : '/admin/revendedores'} 
+                    className="block px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Panel
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-medium"
+                  >
+                    Salir
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <Link 
+                    href="/login" 
+                    className="block px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors font-medium text-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Iniciar Sesión
+                  </Link>
+                  <Link 
+                    href="/acceso" 
+                    className="block px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium text-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Registro
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };
