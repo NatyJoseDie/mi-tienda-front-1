@@ -5,6 +5,7 @@ import { Producto } from '@/types/producto';
 import EditarProductoModal from '@/components/EditarProductoModal';
 
 const STOCK_CRITICO = 5;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 interface Categoria {
   id: string;
@@ -107,7 +108,7 @@ export default function AdminProductos() {
     setLoadingCategorias(true);
     try {
       console.log('🔄 Iniciando carga de categorías...');
-      const res = await fetch('http://localhost:3000/categorias', {
+      const res = await fetch(`${API_URL}/categorias`, {
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -131,8 +132,8 @@ export default function AdminProductos() {
     setError(null);
     try {
       const endpoint = showInactive
-        ? 'http://localhost:3000/productos/inactivos'
-        : 'http://localhost:3000/productos/publico';
+        ? `${API_URL}/productos/inactivos`
+        : `${API_URL}/productos/publico`;
       const res = await fetch(endpoint, {
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
@@ -232,7 +233,7 @@ export default function AdminProductos() {
   const handleUpdatePorcentaje = async (id: string, nuevoPorcentaje: number) => {
     setIsUpdatingPorcentaje(true);
     try {
-      const res = await fetch(`http://localhost:3000/productos/${id}/porcentaje-ganancia`, {
+      const res = await fetch(`${API_URL}/productos/${id}/porcentaje-ganancia`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ porcentaje: nuevoPorcentaje }),
@@ -272,7 +273,7 @@ export default function AdminProductos() {
 
   const handleGenerarPreciosConsumidorFinal = async () => {
     try {
-      const response = await fetch('http://localhost:3000/precios/generar-consumidor-final', {
+      const response = await fetch(`${API_URL}/precios/generar-consumidor-final`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -5,6 +5,8 @@ import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import Image from 'next/image';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 export default function CarritoPage() {
   const { cartItems, removeFromCart, clearCart, totalItems } = useCart();
   const [formData, setFormData] = useState({
@@ -45,7 +47,7 @@ export default function CarritoPage() {
     };
 
     try {
-      const response = await fetch('http://localhost:3000/usuarios/pedido-consumidor', {
+      const response = await fetch(`${API_URL}/usuarios/pedido-consumidor`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

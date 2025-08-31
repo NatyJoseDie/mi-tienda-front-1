@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 // Definimos las props que el componente recibirá.
 // onAjusteGuardado es una función que se llamará para refrescar la lista de productos.
 interface AjustePrecioCostoProps {
@@ -20,7 +22,7 @@ const AjustePrecioCosto: React.FC<AjustePrecioCostoProps> = ({ onAjusteGuardado 
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('http://localhost:3000/productos/ajuste-precio-costo');
+        const res = await fetch(`${API_URL}/productos/ajuste-precio-costo`);
         if (!res.ok) throw new Error('No se pudo cargar el ajuste.');
         const data = await res.json();
         setValor(data.valor);
@@ -38,7 +40,7 @@ const AjustePrecioCosto: React.FC<AjustePrecioCostoProps> = ({ onAjusteGuardado 
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:3000/productos/ajuste-precio-costo', {
+      const res = await fetch(`${API_URL}/productos/ajuste-precio-costo`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ valor }),

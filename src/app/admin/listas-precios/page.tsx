@@ -42,7 +42,7 @@ export default function AdminListasPrecios() {
   const handleSave = async (formData: FormData) => {
     try {
       const isEdit = !!editData;
-      const url = isEdit ? `http://localhost:3000/productos/${editData!.id}` : 'http://localhost:3000/productos';
+      const url = isEdit ? `${API_URL}/productos/${editData!.id}` : `${API_URL}/productos`;
       const method = isEdit ? 'PUT' : 'POST';
       
       console.log('Enviando datos:', Object.fromEntries(formData.entries()));
@@ -88,7 +88,7 @@ export default function AdminListasPrecios() {
     if (!deleteId) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/productos/${deleteId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/productos/${deleteId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Error al eliminar el producto');
       setProductos(prev => prev.filter(p => p.id !== deleteId));
       setDeleteId(null);
@@ -149,7 +149,7 @@ export default function AdminListasPrecios() {
                   <td className="px-4 py-2">
                     {prod.imagen_principal ? (
                       <img
-                        src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `http://localhost:3000${prod.imagen_principal}`}
+                        src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `${API_URL}${prod.imagen_principal}`}
                         alt={prod.nombre}
                         className="w-16 h-16 object-cover rounded border"
                         onError={(e) => e.currentTarget.style.display = 'none'}

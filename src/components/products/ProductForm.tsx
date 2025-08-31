@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { Producto } from '@/types/producto';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 interface ProductFormProps {
   initialData?: Partial<Producto>;
   onSubmitAction: (data: any) => void;
@@ -51,9 +53,9 @@ export default function ProductForm({ initialData = {}, onSubmitAction, onCancel
   const fetchCategorias = async () => {
     try {
       setLoadingCategorias(true);
-      console.log('Intentando cargar categorías desde:', 'http://localhost:3000/categorias');
+      console.log('Intentando cargar categorías desde:', `${API_URL}/categorias`);
       
-      const response = await fetch('http://localhost:3000/categorias');
+      const response = await fetch(`${API_URL}/categorias`);
       console.log('Respuesta del servidor:', response.status, response.statusText);
       
       if (!response.ok) {
@@ -94,7 +96,7 @@ export default function ProductForm({ initialData = {}, onSubmitAction, onCancel
       setCreatingCategory(true);
       setError(null);
       
-      const response = await fetch('http://localhost:3000/categorias', {
+      const response = await fetch(`${API_URL}/categorias`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

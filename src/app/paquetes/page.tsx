@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { CheckIcon, StarIcon, CreditCardIcon, GiftIcon } from '@heroicons/react/24/outline';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
 interface ContactoConPlanesForm {
   nombre: string;
   email: string;
@@ -128,7 +130,7 @@ const PaquetesPage: React.FC = () => {
 
     try {
       // Paso 1: Enviar solicitud
-      const response = await fetch('http://localhost:3000/contacto/solicitar-info', {
+      const response = await fetch(`${API_URL}/contacto/solicitar-info`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
