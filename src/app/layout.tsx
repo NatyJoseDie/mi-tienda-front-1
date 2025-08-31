@@ -8,7 +8,7 @@ import { CartProvider } from '@/context/CartContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Comercia - tu tienda de confianza',
+  title: 'Comercia - FerreArt',
   description: 'Descubre un mundo de productos importados premium.',
 };
 

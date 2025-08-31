@@ -28,9 +28,9 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo o Nombre de la Tienda */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold text-gray-900">
-              Comercia
-            </Link>
+            <Link href="/" className="text-2xl font-bold text-blue-600">
+          FerreArt
+        </Link>
           </div>
 
           {/* Navegación */}

@@ -9,7 +9,7 @@ export default function Footer() {
           {/* Brand and Socials */}
           <div className="md:col-span-1">
             <Link href="/" className="text-2xl font-bold mb-4 block">
-              Comercia
+              FerreArt
             </Link>
             <p className="text-sm text-gray-400 mb-4">
               Productos importados premium para tu vida.
@@ -46,14 +46,15 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4">Contacto</h4>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>Email: contacto@comercia.com</li>
+              <li>Email: contacto@ferreart.com</li>
               <li>Teléfono: +54 9 11 1234-5678</li>
             </ul>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-500">
-          <p>&copy; {new Date().getFullYear()} Comercia. Todos los derechos reservados.</p>
+          <p>&copy; {new Date().getFullYear()} FerreArt. Todos los derechos reservados.</p>
+          <p className="mt-2 text-xs text-gray-600">Powered by Comercia</p>
         </div>
       </div>
     </footer>

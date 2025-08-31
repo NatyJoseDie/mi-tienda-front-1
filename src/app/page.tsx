@@ -56,7 +56,7 @@ export default function HomePage() {
         />
         <div className="text-center z-10 px-4">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
-            Comercia
+            FerreArt
           </h1>
           <p className="max-w-2xl mx-auto text-lg md:text-xl text-gray-200 mb-8">
             Descubre un mundo de productos importados premium.
