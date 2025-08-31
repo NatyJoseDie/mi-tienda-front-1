@@ -28,7 +28,7 @@ const Header = () => {
           {/* Logo o Nombre de la Tienda */}
           <div className="flex-shrink-0">
             <Link href="/" className="text-2xl font-bold text-gray-900">
-              FerreArt
+              Comercia
             </Link>
           </div>
 
