@@ -8,37 +8,37 @@ const categories = [
     icon: FiMonitor,
     title: 'Tecnología',
     description: 'Los dispositivos más innovadores del mercado.',
-    className: 'bg-blue-100 text-blue-800',
+    className: 'bg-orange-50 text-orange-800 hover:bg-orange-100',
   },
   {
     icon: FiHeadphones,
     title: 'Audio Premium',
     description: 'Sonido de alta calidad para verdaderos amantes.',
-    className: 'bg-purple-100 text-purple-800',
+    className: 'bg-purple-50 text-purple-700 hover:bg-purple-100',
   },
   {
     icon: FiShoppingCart,
     title: 'Cocina & Hogar',
     description: 'Accesorios que transforman tu espacio.',
-    className: 'bg-orange-100 text-orange-800',
+    className: 'bg-green-100 text-green-800 hover:bg-green-200',
   },
   {
     icon: FiLayers,
     title: 'Textiles Premium',
     description: 'Sábanas y textiles de lujo importados.',
-    className: 'bg-green-100 text-green-800',
+    className: 'bg-slate-100 text-slate-800 hover:bg-slate-200',
   },
   {
     icon: FiCoffee,
     title: 'Mates Artesanales',
     description: 'Tradición argentina con diseño moderno.',
-    className: 'bg-yellow-100 text-yellow-800',
+    className: 'bg-blue-200 text-blue-900 hover:bg-blue-300',
   },
   {
     icon: FiCpu,
     title: 'Electrodomésticos',
     description: 'Freidoras y más para tu cocina inteligente.',
-    className: 'bg-indigo-100 text-indigo-800',
+    className: 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200',
   },
 ];
 
@@ -50,8 +50,8 @@ export default function HomePage() {
         <Image
           src="https://images.unsplash.com/photo-1511289081-d06dda19034d?q=80&w=2070&auto=format&fit=crop"
           alt="Fondo de tecnología"
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{ objectFit: 'cover' }}
           className="-z-10 brightness-50"
         />
         <div className="text-center z-10 px-4">
@@ -66,13 +66,13 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link
               href="#categorias"
-              className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full font-medium hover:opacity-90 transition-opacity"
+              className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-full font-medium transition-all duration-200 shadow-lg"
             >
               Explorar Categorías
             </Link>
             <Link
               href="#conocemas"
-              className="px-8 py-3 border border-white rounded-full font-medium hover:bg-white hover:text-black transition-colors"
+              className="px-8 py-3 border-2 border-white rounded-full font-medium hover:bg-white hover:text-gray-900 transition-colors duration-200"
             >
               Conocé Más
             </Link>
@@ -81,15 +81,15 @@ export default function HomePage() {
       </section>
 
       {/* Opciones de Compra Section */}
-      <section id="opciones-compra" className="py-24 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900">Opciones de Compra</h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+      <section id="opciones-compra" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Opciones de Compra</h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Elige la modalidad que mejor se adapte a tus necesidades.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
             {/* Card Minorista */}
             <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 text-center md:text-left">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Compra Minorista</h3>
@@ -101,12 +101,12 @@ export default function HomePage() {
               </Link>
             </div>
             {/* Card Revendedor */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-8 rounded-2xl shadow-lg text-center md:text-left">
+            <div className="bg-gradient-to-br from-blue-600 to-purple-600 text-white p-8 rounded-2xl shadow-lg text-center md:text-left">
               <h3 className="text-2xl font-bold mb-4">¿Quieres ser Revendedor?</h3>
-              <p className="opacity-90 mb-6">
+              <p className="text-blue-100 mb-6">
                 Obtén precios exclusivos, soporte personalizado y sé parte de nuestra red de distribuidores.
               </p>
-              <Link href="/registro-revendedor" className="font-bold bg-white text-purple-600 px-4 py-2 rounded-full hover:opacity-90 transition-opacity">
+              <Link href="/registro-revendedor" className="inline-block font-bold bg-white text-purple-600 px-6 py-3 rounded-full hover:bg-blue-50 transition-colors duration-200 shadow-sm">
                 Más información
               </Link>
             </div>
@@ -115,15 +115,15 @@ export default function HomePage() {
       </section>
 
       {/* Tu Propia Tienda Section */}
-      <section id="tu-tienda" className="py-24 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gray-900 text-white p-12 rounded-2xl shadow-2xl flex flex-col md:flex-row items-center gap-8">
+      <section id="tu-tienda" className="py-20 bg-white">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="bg-gray-900 text-white p-12 md:p-16 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center gap-12">
             <div className="flex-1 text-center md:text-left">
               <h2 className="text-4xl font-bold mb-4">Potencia tu Negocio con tu Propia Tienda Online</h2>
               <p className="text-lg text-gray-300 mb-6">
                 ¿Eres emprendedor? Te ofrecemos la misma tecnología que ves aquí para que puedas mostrar tus productos, gestionar tus ventas y tener el control total de tu negocio. Sin comisiones por venta.
               </p>
-              <Link href="/paquetes" className="font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity">
+              <Link href="/paquetes" className="inline-block font-bold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-full transition-all duration-200 shadow-lg">
                 Ver Planes y Precios
               </Link>
             </div>
@@ -138,15 +138,15 @@ export default function HomePage() {
       </section>
 
       {/* Categorias Section */}
-      <section id="categorias" className="py-24 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900">Nuestras Categorías</h2>
-            <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+      <section id="categorias" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Nuestras Categorías</h2>
+            <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Cada producto seleccionado cuidadosamente para ofrecerte la mejor calidad y diseño.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
             {categories.map((category) => (
               <CategoryCard
                 key={category.title}
@@ -161,26 +161,26 @@ export default function HomePage() {
       </section>
 
       {/* Newsletter/Contact Section */}
-      <section id="conocemas" className="py-24 bg-gray-50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-4xl font-bold text-gray-900">¿Listo para Descubrir Más?</h2>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+      <section id="conocemas" className="py-20 bg-gray-50">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">¿Listo para Descubrir Más?</h2>
+          <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
             Próximamente lanzamos nuestra tienda online. Mantente informado sobre nuestros productos únicos.
           </p>
 
-          <div className="mt-12 max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-lg text-left">
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Mantente Conectado</h3>
-            <p className="text-gray-600 mb-6">Sé el primero en conocer nuestros nuevos productos y ofertas exclusivas.</p>
-            <div className="space-y-4">
+          <div className="mt-16 max-w-xl mx-auto bg-white p-10 rounded-3xl shadow-xl text-left">
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Mantente Conectado</h3>
+            <p className="text-gray-600 mb-8 leading-relaxed">Sé el primero en conocer nuestros nuevos productos y ofertas exclusivas.</p>
+            <div className="space-y-5">
               <Link
                 href="#"
-                className="block w-full text-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full font-medium hover:opacity-90 transition-opacity"
+                className="block w-full text-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-full font-medium transition-all duration-200 shadow-lg text-lg"
               >
                 Suscribirse al Newsletter
               </Link>
               <Link
                 href="#"
-                className="block w-full text-center px-6 py-3 border border-gray-300 text-gray-700 rounded-full font-medium hover:bg-gray-100 transition-colors"
+                className="block w-full text-center px-8 py-4 border-2 border-gray-300 text-gray-700 hover:border-purple-600 hover:text-purple-600 rounded-full font-medium transition-colors duration-200 text-lg"
               >
                 Contactar por WhatsApp
               </Link>

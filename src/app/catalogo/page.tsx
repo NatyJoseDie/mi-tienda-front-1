@@ -47,7 +47,8 @@ export default function CatalogoPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('http://localhost:3000/catalogo/visual', { cache: 'no-store' });
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${API_BASE_URL}/catalogo/visual`, { cache: 'no-store' });
         if (!res.ok) {
           throw new Error(`Error al cargar productos: ${res.statusText}`);
         }

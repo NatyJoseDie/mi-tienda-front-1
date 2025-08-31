@@ -10,8 +10,9 @@ import Link from "next/link";
 // Función para obtener el producto por ID con logs detallados
 async function getProductById(id: string): Promise<Producto | null> {
   console.log('[FETCH] Buscando producto con id:', id);
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   try {
-    const res = await fetch(`http://localhost:3000/catalogo/producto/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/catalogo/producto/${id}`, {
       cache: 'no-store',
     });
     console.log('[FETCH] Status:', res.status);
