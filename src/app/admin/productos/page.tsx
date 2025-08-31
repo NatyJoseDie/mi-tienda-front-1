@@ -38,6 +38,7 @@ export default function AdminProductos() {
   });
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [loadingCategorias, setLoadingCategorias] = useState(true);
+  const [categoriasExpandidas, setCategoriasExpandidas] = useState<{[key: number]: boolean}>({});
 
   // Función para abrir el modal de edición
   const abrirModalEditar = (producto: Producto) => {
@@ -89,10 +90,9 @@ export default function AdminProductos() {
   };
 
   const toggleCategoria = (categoriaId: number) => {
-    const [categoriasExpandidas, setCategoriasExpandidas] = useState<{[key: number]: boolean}>({});
     setCategoriasExpandidas((prev) => ({
       ...prev,
-      [categoriaId]: !prev[categoriaId],
+      [categoriaId]: !prev[categoriaId]
     }));
   };
 
@@ -299,49 +299,82 @@ export default function AdminProductos() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Gestión de Productos</h1>
-      
-      <div className="mb-4 flex justify-between items-center">
-        <div className="flex gap-2">
-          <button 
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-            onClick={handleDownloadExcel}
-          >
-            📊 Descargar Excel
-          </button>
-          <button 
-            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"
-            onClick={handleDownloadPDF}
-          >
-            📄 Descargar PDF
-          </button>
-          <button 
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-            onClick={handleGenerarPreciosConsumidorFinal}
-          >
-            💰 Generar Precios Consumidor Final
-          </button>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={showInactive}
-              onChange={(e) => setShowInactive(e.target.checked)}
-              className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
-            />
-            <span className="text-sm text-gray-700">Mostrar productos inactivos</span>
-          </label>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Animated Background Particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
+      <div className="relative z-10 p-6">
+        {/* Header with Back Button */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => window.location.href = '/admin'}
+              className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-gray-500/25"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+              </svg>
+              Volver al Panel
+            </button>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Gestión de Productos
+            </h1>
+          </div>
+        </div>
+      
+        <div className="mb-6 flex justify-between items-center">
+          <div className="flex gap-3">
+            <button 
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-green-500/25 flex items-center gap-2 font-medium"
+              onClick={handleDownloadExcel}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M8,12V14H16V12H8M8,16V18H13V16H8Z" />
+              </svg>
+              Descargar Excel
+            </button>
+            <button 
+              className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-6 py-3 rounded-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/25 flex items-center gap-2 font-medium"
+              onClick={handleDownloadPDF}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,10.5H7V12.5H10V10.5M17,10.5H14V12.5H17V10.5M10,13.5H7V15.5H10V13.5M17,13.5H14V15.5H17V13.5M10,16.5H7V18.5H10V16.5M17,16.5H14V18.5H17V16.5Z" />
+              </svg>
+              Descargar PDF
+            </button>
+            <button 
+              className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white px-6 py-3 rounded-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-blue-500/25 flex items-center gap-2 font-medium"
+              onClick={handleGenerarPreciosConsumidorFinal}
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7,15H9C9,16.08 10.37,17 12,17C13.63,17 15,16.08 15,15C15,13.9 13.96,13.5 11.76,12.97C9.64,12.44 7,11.78 7,9C7,7.21 8.47,5.69 10.5,5.18V3H13.5V5.18C15.53,5.69 17,7.21 17,9H15C15,7.92 13.63,7 12,7C10.37,7 9,7.92 9,9C9,10.1 10.04,10.5 12.24,11.03C14.36,11.56 17,12.22 17,15C17,16.79 15.53,18.31 13.5,18.82V21H10.5V18.82C8.47,18.31 7,16.79 7,15Z" />
+              </svg>
+              Generar Precios Consumidor Final
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-2 bg-black/20 backdrop-blur-md border border-white/20 px-4 py-2 rounded-lg">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              <span className="text-sm text-gray-200 font-medium">Mostrar productos inactivos</span>
+            </label>
+          </div>
+        </div>
+
       {/* Panel de Filtros */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
-        <h3 className="text-lg font-semibold mb-4 text-gray-700">🔍 Filtros de Búsqueda</h3>
+      <div className="mb-8 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6">
+        <h3 className="text-xl font-semibold mb-6 text-gray-800">🔍 Filtros de Búsqueda</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Buscar (Nombre/SKU)
@@ -351,7 +384,7 @@ export default function AdminProductos() {
               value={filtros.busqueda}
               onChange={(e) => setFiltros(prev => ({ ...prev, busqueda: e.target.value }))}
               placeholder="Buscar producto..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
             />
           </div>
 
@@ -362,7 +395,7 @@ export default function AdminProductos() {
             <select
               value={filtros.categoria_id}
               onChange={(e) => setFiltros(prev => ({ ...prev, categoria_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
               disabled={loadingCategorias}
             >
               <option value="">Todas las categorías</option>
@@ -387,14 +420,14 @@ export default function AdminProductos() {
                 value={filtros.stockMinimo}
                 onChange={(e) => setFiltros(prev => ({ ...prev, stockMinimo: e.target.value }))}
                 placeholder="Mín"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
               />
               <input
                 type="number"
                 value={filtros.stockMaximo}
                 onChange={(e) => setFiltros(prev => ({ ...prev, stockMaximo: e.target.value }))}
                 placeholder="Máx"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
               />
             </div>
           </div>
@@ -409,14 +442,14 @@ export default function AdminProductos() {
                 value={filtros.precioMinimo}
                 onChange={(e) => setFiltros(prev => ({ ...prev, precioMinimo: e.target.value }))}
                 placeholder="Mín"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
               />
               <input
                 type="number"
                 value={filtros.precioMaximo}
                 onChange={(e) => setFiltros(prev => ({ ...prev, precioMaximo: e.target.value }))}
                 placeholder="Máx"
-                className="w-full px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
               />
             </div>
           </div>
@@ -437,7 +470,7 @@ export default function AdminProductos() {
             <div className="flex items-center gap-4">
               <button
                 onClick={limpiarFiltros}
-                className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition"
+                className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-all duration-200 font-medium shadow-sm hover:shadow-md"
               >
                 🗑️ Limpiar Filtros
               </button>
@@ -451,15 +484,32 @@ export default function AdminProductos() {
       </div>
 
       {loading ? (
-        <div className="text-center text-gray-500">Cargando productos...</div>
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            <p className="mt-4 text-gray-600 font-medium">Cargando productos...</p>
+          </div>
+        </div>
       ) : error ? (
-        <div className="text-center text-red-500">{error}</div>
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-12">
+          <div className="text-center">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-red-600 font-medium">Error: {error}</p>
+            </div>
+          </div>
+        </div>
       ) : productosFiltrados.length === 0 ? (
-        <div className="text-center text-gray-500">
-          {productos.length === 0 
-            ? (showInactive ? 'No hay productos inactivos.' : 'No hay productos registrados.')
-            : 'No se encontraron productos con los filtros aplicados.'
-          }
+        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-12">
+          <div className="text-center">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 max-w-md mx-auto">
+              <p className="text-gray-500 font-medium">
+                {productos.length === 0 
+                  ? (showInactive ? 'No hay productos inactivos.' : 'No hay productos registrados.')
+                  : 'No se encontraron productos con los filtros aplicados.'
+                }
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-8">
@@ -605,6 +655,7 @@ export default function AdminProductos() {
         producto={productoAEditar}
         onGuardar={handleProductoActualizado}
       />
+      </div>
     </div>
   );
 }

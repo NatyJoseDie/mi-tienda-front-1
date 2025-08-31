@@ -12,30 +12,10 @@ import {
   CalendarIcon,
   ShoppingBagIcon
 } from '@heroicons/react/24/outline';
-
-interface PedidoItem {
-  id: string;
-  producto_id: string;
-  cantidad: number;
-  precio_unitario: number;
-}
-
-interface Pedido {
-  id: string;
-  fecha: string;
-  estado: 'pendiente' | 'confirmado' | 'preparando' | 'enviado' | 'entregado' | 'cancelado';
-  total: number;
-  total_calculado: number;
-  observaciones: {
-    nombre?: string;
-    email?: string;
-    telefono?: string;
-    direccion?: string;
-    notas?: string;
-  };
-  pedido_items: PedidoItem[];
-  productos?: any[];
-}
+import { Pedido } from '@/services/pedidos';
+import { usePedidos } from '@/hooks/usePedidos';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -49,12 +29,22 @@ const estadoConfig = {
 };
 
 export default function AdminPedidos() {
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    pedidos,
+    loading,
+    error,
+    actualizandoEstado,
+    cargarPedidos,
+    actualizarEstado: actualizarEstadoPedido,
+    clearError
+  } = usePedidos();
+
+  // Estados del componente
   const [filtroEstado, setFiltroEstado] = useState<string>('');
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<Pedido | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [actualizandoEstado, setActualizandoEstado] = useState<string | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [showVideoModal, setShowVideoModal] = useState(false);
@@ -63,59 +53,44 @@ export default function AdminPedidos() {
   // Mapa de toggles por pedido para habilitar entrega manual/externa
   const [entregaManualMap, setEntregaManualMap] = useState<Record<string, boolean>>({});
 
+  // Verificar autenticación
   useEffect(() => {
-    cargarPedidos();
-  }, []);
-
-  const cargarPedidos = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/productos/admin/pedidos`);
-      if (response.ok) {
-        const data = await response.json();
-        setPedidos(data);
-      } else {
-        console.error('Error al cargar pedidos');
-      }
-    } catch (error) {
-      console.error('Error de conexión:', error);
-    } finally {
-      setLoading(false);
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
     }
-  };
+  }, [isAuthenticated, authLoading, router]);
+
+  // Mostrar loading mientras se verifica la autenticación
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Verificando autenticación...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // No renderizar nada si no está autenticado (se redirigirá)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const actualizarEstado = async (pedidoId: string, nuevoEstado: string) => {
-    try {
-      setActualizandoEstado(pedidoId);
-      const body: any = { estado: nuevoEstado };
-      if (nuevoEstado === 'entregado' && entregaManualMap[pedidoId]) {
-        body.entrega_manual = true;
-      }
-      const response = await fetch(`${API_URL}/productos/admin/pedidos/${pedidoId}/estado`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      });
-
-      if (response.ok) {
-        await cargarPedidos(); // Recargar lista
-        alert(`✅ Pedido actualizado a: ${estadoConfig[nuevoEstado as keyof typeof estadoConfig]?.label}`);
-      } else {
-        const text = await response.text().catch(() => '');
-        console.error('Actualizar estado (sin video) fallo:', { status: response.status, text });
-        alert(`❌ Error (HTTP ${response.status}): ${text || 'No se pudo actualizar el pedido'}`);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('❌ Error de conexión');
-    } finally {
-      setActualizandoEstado(null);
+    const entregaManual = nuevoEstado === 'entregado' && entregaManualMap[pedidoId];
+    
+    const result = await actualizarEstadoPedido(pedidoId, nuevoEstado, entregaManual);
+    
+    if (result.success) {
+      alert(`✅ Pedido actualizado a: ${estadoConfig[nuevoEstado as keyof typeof estadoConfig]?.label}`);
+    } else {
+      alert(`❌ ${result.message}`);
     }
   };
 
   const actualizarEstadoConVideo = async (pedidoId: string, nuevoEstado: string, video?: File) => {
     try {
-      setActualizandoEstado(pedidoId);
       
       const formData = new FormData();
       formData.append('estado', nuevoEstado);
@@ -126,6 +101,7 @@ export default function AdminPedidos() {
 
       const response = await fetch(`${API_URL}/productos/admin/pedidos/${pedidoId}/estado`, {
         method: 'PUT',
+        credentials: 'include', // Incluir cookies
         body: formData,
       });
 
@@ -145,7 +121,7 @@ export default function AdminPedidos() {
       console.error('Error:', error);
       alert('❌ Error de conexión');
     } finally {
-      setActualizandoEstado(null);
+      // El estado se maneja internamente en el hook
     }
   };
 
@@ -207,6 +183,53 @@ export default function AdminPedidos() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Mostrar error si existe
+  if (error) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Pedidos</h1>
+          <p className="text-gray-600 mt-1">Administra y actualiza el estado de todos los pedidos</p>
+        </div>
+        
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <XCircleIcon className="w-8 h-8 text-red-600 mr-3" />
+            <h2 className="text-lg font-semibold text-red-800">Error al cargar pedidos</h2>
+          </div>
+          <p className="text-red-700 mb-4">{error}</p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                clearError();
+                cargarPedidos();
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            >
+              🔄 Reintentar
+            </button>
+            <button
+              onClick={clearError}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Cerrar
+            </button>
+          </div>
+          
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-800 mb-2">💡 Posibles soluciones:</h3>
+            <ul className="text-blue-700 space-y-1 text-sm">
+              <li>• Verifica que el servidor backend esté corriendo en el puerto 3000</li>
+              <li>• Comprueba tu conexión a internet</li>
+              <li>• Asegúrate de estar autenticado correctamente</li>
+              <li>• Revisa la consola del navegador para más detalles</li>
+            </ul>
+          </div>
+        </div>
       </div>
     );
   }

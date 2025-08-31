@@ -50,6 +50,7 @@ export default function CarritoPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Incluir cookies
         body: JSON.stringify(pedido),
       });
 

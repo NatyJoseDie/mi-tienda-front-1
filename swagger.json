@@ -151,6 +151,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "conGanancia",
+            "required": false,
+            "in": "query",
+            "description": "Incluir cálculo de ganancia en los productos",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -421,6 +430,10 @@
                   "estado": {
                     "type": "string",
                     "example": "completado"
+                  },
+                  "entrega_manual": {
+                    "type": "boolean",
+                    "description": "Indica si es una entrega manual/externa"
                   }
                 },
                 "required": [
@@ -439,6 +452,61 @@
           }
         },
         "summary": "Actualizar estado de un pedido",
+        "tags": [
+          "productos"
+        ]
+      },
+      "put": {
+        "description": "Actualiza el estado de un pedido con video de evidencia",
+        "operationId": "ProductosController_actualizarEstadoPedidoConVideo",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID del pedido a actualizar",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "estado": {
+                    "type": "string",
+                    "description": "Nuevo estado del pedido",
+                    "example": "enviado"
+                  },
+                  "video": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Video de evidencia (máximo 50MB)"
+                  }
+                },
+                "required": [
+                  "estado"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Estado del pedido actualizado correctamente con video"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos o video muy grande"
+          },
+          "404": {
+            "description": "Pedido no encontrado"
+          }
+        },
+        "summary": "Actualizar estado de un pedido con video",
         "tags": [
           "productos"
         ]
@@ -875,25 +943,49 @@
     },
     "/compras": {
       "get": {
+        "description": "Obtiene la lista de todas las compras registradas",
         "operationId": "ComprasController_listarCompras",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Lista de compras obtenida correctamente"
+          },
+          "500": {
+            "description": "Error interno del servidor"
           }
         },
+        "summary": "Listar compras",
         "tags": [
           "compras"
         ]
       },
       "post": {
+        "description": "Registra una nueva compra a proveedor",
         "operationId": "ComprasController_registrarCompra",
         "parameters": [],
-        "responses": {
-          "201": {
-            "description": ""
+        "requestBody": {
+          "required": true,
+          "description": "Datos de la compra",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCompraDto"
+              }
+            }
           }
         },
+        "responses": {
+          "201": {
+            "description": "Compra registrada correctamente"
+          },
+          "400": {
+            "description": "Datos de entrada inválidos"
+          },
+          "500": {
+            "description": "Error interno del servidor"
+          }
+        },
+        "summary": "Registrar compra",
         "tags": [
           "compras"
         ]

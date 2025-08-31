@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  /* Tus variables de tema personalizadas van aquí */
+  --color-security-primary: #3b82f6;
+  --color-security-success: #10b981;
+  --color-security-warning: #f59e0b;
+  --color-security-danger: #ef4444;
+  --color-security-info: #8b5cf6;
+  --color-security-gray: #6b7280;
 }

@@ -13,6 +13,7 @@ export async function actualizarProductoCatalogo(id: string, datos: ActualizarPr
     headers: {
       'Content-Type': 'application/json'
     },
+    credentials: 'include', // Incluir cookies
     body: JSON.stringify(datos)
   });
   

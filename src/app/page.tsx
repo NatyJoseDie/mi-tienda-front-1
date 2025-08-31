@@ -123,8 +123,8 @@ export default function HomePage() {
               <p className="text-lg text-gray-300 mb-6">
                 ¿Eres emprendedor? Te ofrecemos la misma tecnología que ves aquí para que puedas mostrar tus productos, gestionar tus ventas y tener el control total de tu negocio. Sin comisiones por venta.
               </p>
-              <Link href="/contacto" className="font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity">
-                Quiero mi propia tienda
+              <Link href="/paquetes" className="font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full hover:opacity-90 transition-opacity">
+                Ver Planes y Precios
               </Link>
             </div>
             <div className="flex-shrink-0">

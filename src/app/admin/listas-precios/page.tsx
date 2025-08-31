@@ -7,6 +7,7 @@ import Modal from '@/components/products/Modal';
 import AjustePrecioCosto from '../productos/AjustePrecioCosto';
 
 const STOCK_CRITICO = 5;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export default function AdminListasPrecios() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -22,7 +23,7 @@ export default function AdminListasPrecios() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('http://localhost:3000/productos', {
+      const res = await fetch(`${API_URL}/productos`, {
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
       });

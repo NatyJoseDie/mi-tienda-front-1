@@ -34,6 +34,12 @@ export default function AdminCatalogoVisual() {
   const [uploading, setUploading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const [dragOverGallery, setDragOverGallery] = useState(false);
+  const [imagePreviewModal, setImagePreviewModal] = useState(false);
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
 
@@ -182,6 +188,107 @@ export default function AdminCatalogoVisual() {
     }
   };
 
+  const eliminarImagenPrincipal = async (productId: string) => {
+    if (!confirm('¿Estás seguro de eliminar la imagen principal?')) return;
+
+    try {
+      const response = await fetch(`${API_URL}/catalogo/producto/${productId}/imagen-principal`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        // Recargar la lista completa
+        await cargarCatalogoVisual();
+        
+        // Buscar y actualizar el producto seleccionado desde la lista ya cargada
+        setProductos(prevProductos => {
+          const updatedProduct = prevProductos.find(p => p.id === productId);
+          if (updatedProduct && selectedProduct) {
+            setSelectedProduct(updatedProduct);
+          }
+          return prevProductos;
+        });
+        
+        alert('✅ Imagen principal eliminada correctamente');
+      }
+    } catch (error) {
+      console.error('Error al eliminar imagen principal:', error);
+      alert('❌ Error al eliminar la imagen principal');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent, productId: string, isGallery: boolean = false) => {
+    e.preventDefault();
+    setDragOver(false);
+    setDragOverGallery(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      if (isGallery) {
+        agregarImagenes(productId, files);
+      } else {
+        actualizarImagenPrincipal(productId, files[0]);
+      }
+    }
+  };
+
+  const handleGalleryDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverGallery(true);
+  };
+
+  const handleGalleryDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverGallery(false);
+  };
+
+  const openImagePreview = (images: string[], startIndex: number = 0) => {
+    setPreviewImages(images);
+    setCurrentImageIndex(startIndex);
+    setZoomLevel(1);
+    setImagePreviewModal(true);
+  };
+
+  const closeImagePreview = () => {
+    setImagePreviewModal(false);
+    setPreviewImages([]);
+    setCurrentImageIndex(0);
+    setZoomLevel(1);
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % previewImages.length);
+    setZoomLevel(1);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + previewImages.length) % previewImages.length);
+    setZoomLevel(1);
+  };
+
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.5, 3));
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.5, 0.5));
+  };
+
+  const resetZoom = () => {
+    setZoomLevel(1);
+  };
+
   const descargarCatalogoPDF = async () => {
     try {
       const response = await fetch(`${API_URL}/catalogo/descargar/catalogo-visual/pdf`);
@@ -211,60 +318,105 @@ export default function AdminCatalogoVisual() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-12 text-center">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600 mx-auto"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-indigo-400 to-purple-500 opacity-20 animate-pulse"></div>
+          </div>
+          <h3 className="text-xl font-bold text-slate-800 mt-6 mb-2">Cargando Catálogo Visual</h3>
+          <p className="text-slate-600">Obteniendo productos y sus imágenes...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Catálogo Visual</h1>
-            <p className="text-gray-600 mt-1">Gestiona las imágenes y visualización del catálogo público</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => window.location.href = '/admin'}
+                  className="bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-slate-500/25"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+                  </svg>
+                  Volver al Panel
+                </button>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Catálogo Visual</h1>
+                  <p className="text-slate-600 mt-1 font-medium">Gestiona las imágenes y visualización del catálogo público</p>
+                </div>
+              </div>
+              <button
+                onClick={descargarCatalogoPDF}
+                className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 transform hover:scale-105"
+              >
+                <ArrowDownTrayIcon className="w-5 h-5" />
+                Descargar PDF
+              </button>
+            </div>
           </div>
-          <button
-            onClick={descargarCatalogoPDF}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <ArrowDownTrayIcon className="w-5 h-5" />
-            Descargar PDF
-          </button>
         </div>
-      </div>
 
-      {/* Filtros */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <input
-            type="text"
-            placeholder="Buscar productos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+        {/* Filtros */}
+        <div className="mb-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/30 p-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar productos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all duration-200 placeholder-slate-400"
+                  />
+                </div>
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="appearance-none px-4 py-3 pr-10 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/80 backdrop-blur-sm transition-all duration-200 text-slate-700 font-medium min-w-[200px]"
+                >
+                  <option value="">Todas las categorías</option>
+                  {categorias.map(categoria => (
+                    <option key={categoria} value={categoria}>{categoria}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <select
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">Todas las categorías</option>
-          {categorias.map(categoria => (
-            <option key={categoria} value={categoria}>{categoria}</option>
-          ))}
-        </select>
-      </div>
 
-      {/* Grid de productos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {productosFiltrados.map((producto) => (
-          <div key={producto.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        {/* Grid de productos */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {productosFiltrados.map((producto) => (
+            <div key={producto.id} className="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] border border-white/50">
             {/* Imagen principal */}
-            <div className="relative h-64 bg-gray-100">
+            <div className="relative h-64 bg-gray-100 cursor-pointer"
+                 onClick={() => {
+                   const allImages = [producto.imagen_principal, ...(producto.imagenes || [])].filter((img): img is string => Boolean(img));
+                   if (allImages.length > 0) {
+                     openImagePreview(allImages, 0);
+                   }
+                 }}>
               {producto.imagen_principal ? (
                 <img
                   src={producto.imagen_principal}
@@ -297,13 +449,13 @@ export default function AdminCatalogoVisual() {
               )}
               
               {/* Botones de acción */}
-              <div className="absolute top-3 right-3 flex gap-2">
+              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                 <button
                   onClick={() => toggleDestacar(producto.id, !producto.destacado)}
-                  className={`p-2 rounded-xl shadow-lg transition-all duration-200 ${
+                  className={`p-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-110 ${
                     producto.destacado 
-                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white' 
-                      : 'bg-white/90 hover:bg-white text-gray-700'
+                      ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white shadow-yellow-500/25' 
+                      : 'bg-white/90 hover:bg-white text-slate-700 shadow-slate-500/25'
                   }`}
                   title={producto.destacado ? 'Quitar de destacados' : 'Destacar producto'}
                 >
@@ -318,40 +470,40 @@ export default function AdminCatalogoVisual() {
                     setSelectedProduct(producto);
                     setShowImageModal(true);
                   }}
-                  className="bg-white/90 hover:bg-white p-2 rounded-xl shadow-lg transition-all duration-200"
+                  className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white p-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-110 shadow-indigo-500/25"
                   title="Gestionar imágenes"
                 >
-                  <PencilIcon className="w-5 h-5 text-gray-700" />
+                  <PencilIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
             {/* Información del producto */}
-            <div className="p-6">
+            <div className="p-6 bg-gradient-to-br from-white/50 to-slate-50/50">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                  <h3 className="text-lg font-bold text-slate-800 mb-2 line-clamp-2 group-hover:text-indigo-700 transition-colors duration-300">
                     {producto.nombre}
                   </h3>
-                  <span className="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                  <span className="inline-block bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded-full border border-indigo-200">
                     {producto.categoria}
                   </span>
                 </div>
               </div>
               
               {producto.descripcion && (
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                <p className="text-slate-600 text-sm mb-4 line-clamp-3 leading-relaxed">
                   {producto.descripcion}
                 </p>
               )}
               
               <div className="flex items-center justify-between">
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                     ${producto.precio_final?.toLocaleString('es-AR') || 'N/A'}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    Stock: {producto.stock || 0}
+                  <p className="text-sm text-slate-500 font-medium">
+                    Stock: <span className={`${producto.stock > 10 ? 'text-emerald-600' : producto.stock > 0 ? 'text-amber-600' : 'text-red-500'} font-semibold`}>{producto.stock || 0}</span>
                   </p>
                 </div>
               </div>
@@ -360,13 +512,17 @@ export default function AdminCatalogoVisual() {
         ))}
       </div>
 
-      {productosFiltrados.length === 0 && (
-        <div className="text-center py-12">
-          <PhotoIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron productos</h3>
-          <p className="text-gray-600">Intenta ajustar los filtros de búsqueda</p>
-        </div>
-      )}
+        {productosFiltrados.length === 0 && (
+          <div className="col-span-full">
+            <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/30 text-center py-16">
+              <div className="bg-gradient-to-br from-slate-100 to-slate-200 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                <PhotoIcon className="w-12 h-12 text-slate-400" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">No se encontraron productos</h3>
+              <p className="text-slate-600 max-w-md mx-auto">Intenta ajustar los filtros de búsqueda o verifica que existan productos en el catálogo</p>
+            </div>
+          </div>
+        )}
 
       {/* Modal de gestión de imágenes */}
       {showImageModal && selectedProduct && (
@@ -469,7 +625,13 @@ export default function AdminCatalogoVisual() {
                   🖼️ Imagen Principal
                 </h4>
                 <div className="flex items-start gap-6">
-                  <div className="w-40 h-40 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 shadow-md border-2 border-gray-200">
+                  <div className="w-40 h-40 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 shadow-md border-2 border-gray-200 cursor-pointer"
+                       onClick={() => {
+                         if (selectedProduct.imagen_principal) {
+                           const allImages = [selectedProduct.imagen_principal, ...(selectedProduct.imagenes || [])].filter(Boolean);
+                           openImagePreview(allImages, 0);
+                         }
+                       }}>
                     {selectedProduct.imagen_principal ? (
                       <img
                         src={selectedProduct.imagen_principal}
@@ -494,29 +656,54 @@ export default function AdminCatalogoVisual() {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 hover:border-purple-400 transition-colors">
+                    <div 
+                      className={`border-2 border-dashed rounded-lg p-4 transition-all duration-300 ${
+                        dragOver 
+                          ? 'border-purple-500 bg-purple-50 scale-105' 
+                          : 'border-purple-300 hover:border-purple-400'
+                      }`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, selectedProduct.id, false)}
+                    >
                       <input
                         type="file"
                         accept="image/*"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            console.log('📤 Subiendo imagen principal:', file.name);
+                            console.log('📤 Subiendo imagen principal');
                             actualizarImagenPrincipal(selectedProduct.id, file);
                           }
                         }}
                         className="w-full"
                         disabled={uploading}
                       />
-                      <p className="text-sm text-gray-600 mt-2">
-                        📤 Selecciona una nueva imagen principal
-                      </p>
-                      {selectedProduct.imagen_principal && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          📎 Actual: {selectedProduct.imagen_principal.split('/').pop()}
+                      <div className="text-center mt-2">
+                        <p className="text-sm text-gray-600">
+                          📤 Selecciona o arrastra una imagen principal
                         </p>
-                      )}
+                        <p className="text-xs text-purple-600 font-medium mt-1">
+                          🖱️ Arrastra y suelta aquí tu imagen
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          💡 Formatos soportados: JPG, PNG, GIF • Máximo 5MB
+                        </p>
+                      </div>
                     </div>
+                    {selectedProduct.imagen_principal && (
+                      <button
+                        onClick={() => {
+                          console.log('🗑️ Eliminando imagen principal');
+                          eliminarImagenPrincipal(selectedProduct.id);
+                        }}
+                        className="mt-3 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md hover:shadow-lg"
+                        disabled={uploading}
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                        Eliminar Imagen Principal
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -524,14 +711,15 @@ export default function AdminCatalogoVisual() {
               {/* Imágenes adicionales */}
               <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl border border-yellow-200">
                 <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  🖼️ Galería de Imágenes ({selectedProduct.imagenes?.length || 0})
+                  🖼️ Galería de Imágenes ({selectedProduct?.imagenes?.length || 0})
                 </h4>
                 
-                {selectedProduct.imagenes && selectedProduct.imagenes.length > 0 ? (
+                {selectedProduct?.imagenes && selectedProduct.imagenes.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                     {selectedProduct.imagenes.map((imagen, index) => (
-                      <div key={`${selectedProduct.id}-${index}`} className="relative group">
-                        <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 shadow-md">
+                      <div key={`${selectedProduct?.id}-${index}`} className="relative group">
+                        <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 shadow-md cursor-pointer"
+                             onClick={() => openImagePreview(selectedProduct?.imagenes || [], index)}>
                           <img
                             src={imagen}
                             alt={`Imagen ${index + 1}`}
@@ -554,7 +742,7 @@ export default function AdminCatalogoVisual() {
                         <button
                           onClick={() => {
                             console.log(`🗑️ Eliminando imagen ${index + 1}:`, imagen);
-                            eliminarImagen(selectedProduct.id, imagen);
+                            if (selectedProduct?.id) eliminarImagen(selectedProduct.id, imagen);
                           }}
                           className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg"
                           title="Eliminar imagen"
@@ -575,7 +763,16 @@ export default function AdminCatalogoVisual() {
                   </div>
                 )}
 
-                <div className="border-2 border-dashed border-yellow-300 rounded-lg p-4 hover:border-yellow-400 transition-colors bg-white">
+                <div 
+                  className={`border-2 border-dashed rounded-lg p-4 transition-all duration-300 bg-white ${
+                    dragOverGallery 
+                      ? 'border-yellow-500 bg-yellow-50 scale-105' 
+                      : 'border-yellow-300 hover:border-yellow-400'
+                  }`}
+                  onDragOver={handleGalleryDragOver}
+                  onDragLeave={handleGalleryDragLeave}
+                  onDrop={(e) => selectedProduct?.id && handleDrop(e, selectedProduct.id, true)}
+                >
                   <input
                     type="file"
                     accept="image/*"
@@ -583,33 +780,130 @@ export default function AdminCatalogoVisual() {
                     onChange={(e) => {
                       const files = e.target.files;
                       if (files && files.length > 0) {
-                        console.log(`📤 Subiendo ${files.length} imágenes adicionales`);
-                        agregarImagenes(selectedProduct.id, files);
+                        console.log(`📤 Subiendo ${files.length} imagen(es) a la galería`);
+                        if (selectedProduct?.id) agregarImagenes(selectedProduct.id, files);
                       }
                     }}
                     className="w-full"
                     disabled={uploading}
                   />
-                  <p className="text-sm text-gray-600 mt-2">
-                    📤 Selecciona múltiples imágenes para agregar a la galería
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    💡 Formatos soportados: JPG, PNG, GIF • Máximo 5MB por imagen
-                  </p>
+                  <div className="text-center mt-2">
+                    <p className="text-sm text-gray-600">
+                      📤 Selecciona o arrastra imágenes para la galería
+                    </p>
+                    <p className="text-xs text-yellow-600 font-medium mt-1">
+                      🖱️ Arrastra y suelta aquí tus imágenes
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Formatos: JPG, PNG, WebP (máx. 5MB c/u)
+                    </p>
+                  </div>
+                  {uploading && (
+                    <div className="mt-4 text-center">
+                      <div className="inline-flex items-center gap-2 text-yellow-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
+                        <span className="text-sm font-medium">Subiendo imágenes...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {uploading && (
-                <div className="text-center py-6 bg-blue-50 rounded-xl">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto"></div>
-                  <p className="text-lg font-medium text-blue-700 mt-3">Subiendo imagen...</p>
-                  <p className="text-sm text-blue-600">Por favor espera un momento</p>
-                </div>
-              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Modal de vista previa expandida */}
+        {imagePreviewModal && (
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50">
+            <div className="relative max-w-7xl max-h-full">
+              {/* Botón cerrar */}
+              <button
+                onClick={closeImagePreview}
+                className="absolute top-4 right-4 z-10 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all duration-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              {/* Navegación anterior */}
+              {previewImages.length > 1 && (
+                <button
+                  onClick={prevImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Navegación siguiente */}
+              {previewImages.length > 1 && (
+                <button
+                  onClick={nextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Controles de zoom */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                <button
+                  onClick={zoomOut}
+                  className="text-white hover:text-gray-300 p-1 transition-colors"
+                  disabled={zoomLevel <= 0.5}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+                <span className="text-white text-sm font-medium min-w-[60px] text-center">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  onClick={zoomIn}
+                  className="text-white hover:text-gray-300 p-1 transition-colors"
+                  disabled={zoomLevel >= 3}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+                <button
+                  onClick={resetZoom}
+                  className="text-white hover:text-gray-300 text-xs px-2 py-1 rounded transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+
+              {/* Imagen */}
+              <div className="flex items-center justify-center max-h-[90vh] overflow-hidden">
+                <img
+                  src={previewImages[currentImageIndex]}
+                  alt={`Vista previa ${currentImageIndex + 1}`}
+                  className="max-w-full max-h-full object-contain transition-transform duration-200"
+                  style={{ transform: `scale(${zoomLevel})` }}
+                />
+              </div>
+
+              {/* Indicador de imagen actual */}
+              {previewImages.length > 1 && (
+                <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                  <span className="text-white text-sm font-medium">
+                    {currentImageIndex + 1} / {previewImages.length}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

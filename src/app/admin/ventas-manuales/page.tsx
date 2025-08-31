@@ -407,7 +407,7 @@ export default function AdminVentasManuales() {
                         type="number"
                         min={0}
                         step="0.01"
-                        value={it.precio_venta || ''}
+                        value={it.precio_venta === 0 ? '0' : (it.precio_venta || '')}
                         onChange={(e) => actualizarItem(it.idRow, { 
                           precio_venta: Number(e.target.value) || 0 
                         })}
