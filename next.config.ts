@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     // Deshabilitar ESLint durante el build para evitar que las advertencias bloqueen la compilación
     ignoreDuringBuilds: true,
   },
-  output: 'export',
+  output: 'standalone',
   trailingSlash: true,
   images: {
     unoptimized: true,
