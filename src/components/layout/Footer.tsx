@@ -26,7 +26,7 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold mb-4 text-white">Navegación</h4>
             <ul className="space-y-3 text-sm">
-              <li><Link href="/productos" className="text-gray-400 hover:text-white transition-colors duration-200 block py-1">Productos</Link></li>
+              <li><Link href="/catalogo" className="text-gray-400 hover:text-white transition-colors duration-200 block py-1" prefetch={false}>Catálogo</Link></li>
               <li><Link href="/registro-revendedor" className="text-gray-400 hover:text-white transition-colors duration-200 block py-1">Revendedores</Link></li>
               <li><Link href="/contacto" className="text-gray-400 hover:text-white transition-colors duration-200 block py-1">Contacto</Link></li>
             </ul>

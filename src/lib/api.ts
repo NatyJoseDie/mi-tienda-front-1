@@ -7,6 +7,8 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  // Evita que el catálogo quede esperando indefinidamente cuando el backend está frío
+  timeout: 10000,
 });
 
 // Interceptor de requests (antes de enviar)
