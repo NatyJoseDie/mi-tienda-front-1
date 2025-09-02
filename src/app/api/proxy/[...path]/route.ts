@@ -56,10 +56,14 @@ function filterResponseHeaders(headers: Headers): Headers {
   return filtered;
 }
 
-async function handler(req: NextRequest, { params }: { params: { path: string[] } }) {
+// Next 15 types: the context argument is a Promise you must await
+type RouteCtx = { params: Promise<{ path: string[] }> };
+
+async function handler(req: NextRequest, { params }: RouteCtx) {
+  const resolvedParams = await params;
   try {
     const method = req.method.toUpperCase();
-    const targetUrl = buildTargetUrl(req, params.path || []);
+    const targetUrl = buildTargetUrl(req, resolvedParams.path || []);
 
     const headers = filterRequestHeaders(req.headers);
     // Add forwarding headers
@@ -96,4 +100,22 @@ async function handler(req: NextRequest, { params }: { params: { path: string[] 
   }
 }
 
-export { handler as GET, handler as POST, handler as PUT, handler as PATCH, handler as DELETE, handler as OPTIONS };
+// Export explicit handlers to satisfy Next.js type inference
+export async function GET(req: NextRequest, ctx: RouteCtx) {
+  return handler(req, ctx);
+}
+export async function POST(req: NextRequest, ctx: RouteCtx) {
+  return handler(req, ctx);
+}
+export async function PUT(req: NextRequest, ctx: RouteCtx) {
+  return handler(req, ctx);
+}
+export async function PATCH(req: NextRequest, ctx: RouteCtx) {
+  return handler(req, ctx);
+}
+export async function DELETE(req: NextRequest, ctx: RouteCtx) {
+  return handler(req, ctx);
+}
+export async function OPTIONS(req: NextRequest, ctx: RouteCtx) {
+  return handler(req, ctx);
+}
