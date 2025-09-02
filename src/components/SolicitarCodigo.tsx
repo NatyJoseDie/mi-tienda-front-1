@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Mail, Store, Send, CheckCircle, AlertCircle, Phone, FileText } from 'lucide-react';
+import SecurityHandler, { useSecurityHandler } from './SecurityHandler';
+import { solicitarCodigo } from '@/lib/api-client';
+
 interface SolicitarCodigoDto {
   email: string;
   nombreTienda: string;
   telefono: string;
   descripcionNegocio: string;
 }
-import { Mail, Store, Send, CheckCircle, AlertCircle, Phone, FileText } from 'lucide-react';
-import SecurityHandler, { useSecurityHandler } from './SecurityHandler';
 
 interface SolicitarCodigoProps {
   onSuccess?: (data: { email: string; nombreTienda: string; telefono: string; descripcionNegocio: string; codigo?: string }) => void;
@@ -99,21 +101,12 @@ const SolicitarCodigo: React.FC<SolicitarCodigoProps> = ({
     clearSecurityError();
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/auth/solicitar-codigo`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+      const responseData = await solicitarCodigo({
+        email: formData.email,
+        nombreTienda: formData.nombreTienda,
+        tipoNegocio: formData.descripcionNegocio,
+        descripcion: formData.descripcionNegocio
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al solicitar código');
-      }
-
-      const responseData = await response.json();
       
       setSuccess(true);
       

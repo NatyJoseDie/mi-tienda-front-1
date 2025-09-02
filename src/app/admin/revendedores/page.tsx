@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getProductos, crearPedido } from '@/lib/api-client';
+import api from '@/lib/api';
 
 interface ProductoRevendedor {
   id: string;
@@ -33,7 +35,6 @@ interface DatosRevendedor {
 }
 
 // Conectar al backend real
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export default function RevendedorPage() {
   const router = useRouter();
@@ -73,15 +74,8 @@ export default function RevendedorPage() {
       setLoadingData(true);
       setError('');
       
-      const response = await fetch(`${API_URL}/revendedores/lista-precios`, {
-        credentials: 'include' // Incluir cookies
-      });
+      const { data: result } = await api.get('/revendedores/lista-precios');
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
       console.log('Respuesta del backend:', result);
       
       // El backend devuelve { data: [...] }
@@ -140,15 +134,8 @@ export default function RevendedorPage() {
   const obtenerPorcentajeGanancia = async () => {
     try {
       setLoadingPorcentaje(true);
-      const response = await fetch(`${API_URL}/revendedores/porcentaje-ganancia`, {
-        credentials: 'include' // Incluir cookies
-      });
+      const { data } = await api.get('/revendedores/porcentaje-ganancia');
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
       console.log('Porcentaje de ganancia obtenido:', data);
       
       // El backend devuelve { valor: number }
@@ -165,20 +152,8 @@ export default function RevendedorPage() {
   const actualizarPorcentajeGanancia = async (nuevoPorcentaje: number) => {
     try {
       setLoadingPorcentaje(true);
-      const response = await fetch(`${API_URL}/revendedores/porcentaje-ganancia`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Incluir cookies
-        body: JSON.stringify({ valor: nuevoPorcentaje }), // Usar 'valor' en lugar de 'porcentaje'
-      });
+      const { data } = await api.post('/revendedores/porcentaje-ganancia', { valor: nuevoPorcentaje });
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
       console.log('Porcentaje actualizado:', data);
       
       setPorcentajeGanancia(data.valor || nuevoPorcentaje);
@@ -275,20 +250,8 @@ export default function RevendedorPage() {
         total: calcularTotal()
       };
 
-      const response = await fetch(`${API_URL}/revendedores/pedido`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Incluir cookies
-        body: JSON.stringify(pedidoData),
-      });
+      const { data: result } = await api.post('/revendedores/pedido', pedidoData);
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
       alert('Pedido enviado correctamente. Recibirás un email de confirmación.');
       
       // Limpiar carrito y datos
@@ -303,15 +266,9 @@ export default function RevendedorPage() {
 
   const descargarExcel = async () => {
     try {
-      const response = await fetch(`${API_URL}/revendedores/exportar/excel`, {
-        credentials: 'include' // Incluir cookies
-      });
+      const response = await api.get('/revendedores/exportar/excel', { responseType: 'blob' });
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const blob = await response.blob();
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -328,15 +285,9 @@ export default function RevendedorPage() {
 
   const descargarPDF = async () => {
     try {
-      const response = await fetch(`${API_URL}/revendedores/catalogo-visual/pdf`, {
-        credentials: 'include' // Incluir cookies
-      });
+      const response = await api.get('/revendedores/catalogo-visual/pdf', { responseType: 'blob' });
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const blob = await response.blob();
+      const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -473,212 +424,23 @@ export default function RevendedorPage() {
               <div className="group bg-gradient-to-br from-red-500/10 to-pink-500/10 backdrop-blur-md border border-white/20 p-6 rounded-xl shadow-2xl hover:shadow-red-500/25 transform hover:scale-105 transition-all duration-500 hover:border-red-400/50">
                 <div className="text-red-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                   <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,10.5H7V12.5H10V10.5M17,10.5H14V12.5H17V10.5M10,13.5H7V15.5H10V13.5M17,13.5H14V15.5H17V13.5M10,16.5H7V18.5H10V16.5M17,16.5H14V18.5H17V16.5Z" />
+                    <path d="M7,2V13H10V22L17,10H13L17,2H7Z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-red-300 transition-colors duration-300">Catálogo PDF</h3>
-                <p className="text-gray-300 mb-4 text-sm">Catálogo visual en formato PDF</p>
+                <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-red-300 transition-colors duration-300">Hacer Pedido</h3>
+                <p className="text-gray-300 mb-4 text-sm">Realiza tu pedido personalizado</p>
                 <button
-                  onClick={descargarPDF}
+                  onClick={() => setVista('carrito')}
                   className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-6 py-2 rounded-lg transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-red-500/50 font-medium"
                 >
-                  Descargar
+                  Ver Carrito ({carrito.length})
                 </button>
               </div>
             </div>
-
-
-          </div>
-        )}
-
-        {vista === 'lista' && (
-          <div>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Lista de Precios Mayoristas</h2>
-              <div className="flex items-center space-x-4">
-                <div className="text-sm text-gray-600">
-                  Ganancia aplicada: {porcentajeGanancia}%
-                </div>
-                <div className="flex items-center space-x-2 bg-white px-4 py-2 rounded-lg shadow-sm border">
-                  <label className="text-sm font-medium text-gray-700">Porcentaje:</label>
-                  <input
-                    type="number"
-                    value={porcentajeGanancia}
-                    onChange={(e) => setPorcentajeGanancia(Number(e.target.value))}
-                    className="border rounded px-2 py-1 w-16 text-center text-sm"
-                    min="0"
-                    max="100"
-                  />
-                  <span className="text-sm">%</span>
-                  <button
-                    onClick={() => actualizarPorcentajeGanancia(porcentajeGanancia)}
-                    disabled={loadingPorcentaje}
-                    className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    {loadingPorcentaje ? 'Actualizando...' : 'Actualizar'}
-                  </button>
-                </div>
-              </div>
-            </div>
             
-            {/* Filtros */}
-            <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Buscar producto</label>
-                  <input
-                    type="text"
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    placeholder="Nombre del producto..."
-                    className="w-full border rounded-lg px-3 py-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Filtrar por categoría</label>
-                  <select
-                    value={filtroCategoria}
-                    onChange={(e) => setFiltroCategoria(e.target.value)}
-                    className="w-full border rounded-lg px-3 py-2"
-                  >
-                    <option value="">Todas las categorías</option>
-                    {categorias.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {loadingData ? (
-              <div className="text-center py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <p className="mt-2">Cargando productos...</p>
-              </div>
-            ) : (
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-max">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Imagen</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unidad</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Mayorista</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">% Ganancia</th>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio Final</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {productosFiltrados.map((producto) => {
-                        return (
-                          <tr key={producto.id} className="hover:bg-gray-50">
-                            <td className="px-3 py-4 whitespace-nowrap">
-                              <img 
-                                src={producto.imagen_principal || producto.imagen || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xNiAxNkMyMC40MTgzIDE2IDI0IDE5LjU4MTcgMjQgMjRDMjQgMjguNDE4MyAyMC40MTgzIDMyIDE2IDMyQzExLjU4MTcgMzIgOCAyOC40MTgzIDggMjRDOCAxOS41ODE3IDExLjU4MTcgMTYgMTYgMTZaIiBmaWxsPSIjOUNBM0FGIi8+CjxwYXRoIGQ9Ik0yOCAxMkMzMC4yMDkxIDEyIDMyIDE0LjIwOTEgMzIgMTZDMzIgMTcuNzkwOSAzMC4yMDkxIDIwIDI4IDIwQzI1Ljc5MDkgMjAgMjQgMTcuNzkwOSAyNCAxNkMyNCAxNC4yMDkxIDI1Ljc5MDkgMTIgMjggMTJaIiBmaWxsPSIjOUNBM0FGIi8+Cjwvc3ZnPgo='} 
-                                alt={producto.nombre}
-                                className="h-12 w-12 rounded-lg object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                  if (e.currentTarget.parentElement) {
-                                    e.currentTarget.parentElement.innerHTML = '<span class="text-gray-400 text-xs">Sin img</span>';
-                                  }
-                                }}
-                              />
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{producto.nombre}</div>
-                                <div className="text-xs text-gray-500 truncate max-w-xs">{producto.descripcion}</div>
-                              </div>
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">{producto.categoria}</td>
-                            <td className="px-3 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                producto.stock > 10 ? 'bg-green-100 text-green-800' :
-                                producto.stock > 0 ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {producto.stock}
-                              </span>
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-xs text-gray-900">
-                              {producto.unidad_id || 'Unidad'}
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {formatearPrecio(producto.precio_revendedor)}
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-900">
-                              <span className="text-green-600 font-medium">
-                                {producto.porcentaje_ganancia_aplicado || porcentajeGanancia}%
-                              </span>
-                            </td>
-                            <td className="px-3 py-4 whitespace-nowrap text-sm font-bold text-blue-600">
-                              {formatearPrecio(producto.precio_revendedor)}
-                            </td>
-                            <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
-                              {producto.stock > 0 ? (
-                                <div className="flex items-center space-x-1">
-                                  <div className="flex items-center border rounded">
-                                    <button
-                                      onClick={() => {
-                                        const nuevaCantidad = Math.max(1, (cantidades[producto.id] || 1) - 1);
-                                        setCantidades(prev => ({...prev, [producto.id]: nuevaCantidad}));
-                                      }}
-                                      className="px-1 py-1 text-gray-600 hover:bg-gray-100 text-xs"
-                                    >
-                                      -
-                                    </button>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      max={producto.stock}
-                                      value={cantidades[producto.id] || 1}
-                                      onChange={(e) => {
-                                        const valor = Math.max(1, Math.min(producto.stock, parseInt(e.target.value) || 1));
-                                        setCantidades(prev => ({...prev, [producto.id]: valor}));
-                                      }}
-                                      className="w-12 px-1 py-1 text-center border-0 focus:outline-none text-xs"
-                                    />
-                                    <button
-                                      onClick={() => {
-                                        const nuevaCantidad = Math.min(producto.stock, (cantidades[producto.id] || 1) + 1);
-                                        setCantidades(prev => ({...prev, [producto.id]: nuevaCantidad}));
-                                      }}
-                                      className="px-1 py-1 text-gray-600 hover:bg-gray-100 text-xs"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                  <button
-                                    onClick={() => {
-                                      agregarAlCarrito(producto, cantidades[producto.id] || 1);
-                                      setCantidades(prev => ({...prev, [producto.id]: 1})); // Reset cantidad
-                                    }}
-                                    className="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="text-gray-400 text-xs">Sin stock</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                
-                {productosFiltrados.length === 0 && (
-                  <div className="text-center py-8 text-gray-500">
-                    No se encontraron productos que coincidan con los filtros.
-                  </div>
-                )}
+            {productosFiltrados.length === 0 && !loadingData && (
+              <div className="text-center py-8 text-gray-500">
+                No se encontraron productos que coincidan con los filtros.
               </div>
             )}
           </div>

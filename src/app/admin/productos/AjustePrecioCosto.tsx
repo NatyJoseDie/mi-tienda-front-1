@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import api from '@/lib/api';
 
 // Definimos las props que el componente recibirá.
 // onAjusteGuardado es una función que se llamará para refrescar la lista de productos.
@@ -22,12 +21,10 @@ const AjustePrecioCosto: React.FC<AjustePrecioCostoProps> = ({ onAjusteGuardado 
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_URL}/productos/ajuste-precio-costo`);
-        if (!res.ok) throw new Error('No se pudo cargar el ajuste.');
-        const data = await res.json();
+        const { data } = await api.get('/productos/ajuste-precio-costo');
         setValor(data.valor);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || 'No se pudo cargar el ajuste.');
       } finally {
         setLoading(false);
       }
@@ -40,20 +37,15 @@ const AjustePrecioCosto: React.FC<AjustePrecioCostoProps> = ({ onAjusteGuardado 
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/productos/ajuste-precio-costo`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ valor }),
-      });
-      if (!res.ok) throw new Error('Error al guardar el nuevo ajuste.');
-      
+      await api.patch('/productos/ajuste-precio-costo', { valor });
       // Si se guarda correctamente, llamamos a la función del padre para recargar productos
       onAjusteGuardado();
       alert('Ajuste actualizado correctamente. La lista de productos se ha refrescado.');
 
     } catch (err: any) {
-      setError(err.message);
-      alert(`Error: ${err.message}`);
+      const message = err?.response?.data?.message || err.message || 'Error al guardar el nuevo ajuste.';
+      setError(message);
+      alert(`Error: ${message}`);
     } finally {
       setSaving(false);
     }

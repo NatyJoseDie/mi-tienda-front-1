@@ -2,7 +2,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://mi-tienda-backend-o9i7.onrender.com", // ✅ tu backend en Render
+  // Todas las llamadas del cliente irán al proxy genérico de Next
+  baseURL: "/api/proxy",
   withCredentials: true, // para que envíe cookies si tu backend las usa
   headers: {
     "Content-Type": "application/json",
@@ -17,7 +18,8 @@ api.interceptors.request.use(
     // Ejemplo: agregar token si lo guardás en localStorage
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers = config.headers ?? {};
+      (config.headers as any).Authorization = `Bearer ${token}`;
     }
     return config;
   },

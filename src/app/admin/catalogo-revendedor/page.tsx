@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import api from '@/lib/api';
 
 interface ProductoRevendedor {
   id: string;
@@ -17,8 +18,6 @@ interface ProductoRevendedor {
   unidad_id?: string;
   porcentaje_ganancia_aplicado?: number;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 export default function CatalogoRevendedorPage() {
   const router = useRouter();
@@ -53,13 +52,8 @@ export default function CatalogoRevendedorPage() {
       setLoadingData(true);
       setError('');
       
-      const response = await fetch(`${API_URL}/revendedores/lista-precios`);
+      const { data: result } = await api.get('/revendedores/lista-precios');
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
       const productosData = result.data || result;
       
       if (Array.isArray(productosData) && productosData.length > 0) {
@@ -103,11 +97,8 @@ export default function CatalogoRevendedorPage() {
 
   const obtenerPorcentajeGanancia = async () => {
     try {
-      const response = await fetch(`${API_URL}/revendedores/porcentaje-ganancia`);
-      if (response.ok) {
-        const data = await response.json();
-        setPorcentajeGanancia(data.porcentaje || 20);
-      }
+      const { data } = await api.get('/revendedores/porcentaje-ganancia');
+      setPorcentajeGanancia(data.porcentaje || data.valor || 20);
     } catch (error) {
       console.error('Error obteniendo porcentaje de ganancia:', error);
       setPorcentajeGanancia(20); // Valor por defecto

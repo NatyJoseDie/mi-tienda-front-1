@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { solicitarCodigo as apiSolicitarCodigo, validarCodigo as apiValidarCodigo, registrarConCodigo as apiRegistrarConCodigo } from '@/lib/api-client';
 
 interface SolicitarCodigoDto {
   email: string;
@@ -78,21 +79,7 @@ export const useCodeActivation = (): UseCodeActivationReturn => {
       setIsRequesting(true);
       setError(null);
       
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/auth/solicitar-codigo`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al solicitar código');
-      }
-
-      const responseData = await response.json();
+      const responseData = await apiSolicitarCodigo(data);
       
       // Preparar resultado
       const result = {
@@ -123,21 +110,7 @@ export const useCodeActivation = (): UseCodeActivationReturn => {
         return false;
       }
       
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/auth/validar-codigo`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ codigo }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al validar código');
-      }
-
-      const responseData = await response.json();
+      const responseData = await apiValidarCodigo(codigo);
       
       if (responseData.valido) {
         setValidationResult(responseData);
@@ -186,19 +159,7 @@ export const useCodeActivation = (): UseCodeActivationReturn => {
         return false;
       }
       
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/auth/register-with-code`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error en el registro');
-      }
+      await apiRegistrarConCodigo(data);
       
       // El registro fue exitoso
       return true;

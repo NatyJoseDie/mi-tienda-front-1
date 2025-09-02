@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { solicitarInfoPlanes } from '@/lib/api-client';
 
 interface FormData {
   nombre: string;
@@ -25,24 +26,17 @@ export default function ContactoPage() {
     setLoading(true);
     setError('');
 
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
     try {
-      const response = await fetch(`${API_URL}/contacto/solicitar-info`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+      await solicitarInfoPlanes({
+        nombre: formData.nombre,
+        email: formData.email,
+        telefono: '', // Campo requerido pero no usado en este formulario
+        mensaje: formData.mensaje,
+        planSeleccionado: formData.esSolicitudCodigo ? 'free' : 'consulta'
       });
 
-      if (response.ok) {
-        setSuccess(true);
-        setFormData({ nombre: '', email: '', mensaje: '', esSolicitudCodigo: true });
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Error al enviar el mensaje');
-      }
+      setSuccess(true);
+      setFormData({ nombre: '', email: '', mensaje: '', esSolicitudCodigo: true });
     } catch (err) {
       setError('Error de conexión. Por favor, intentá nuevamente.');
     } finally {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { mockAPI, isMockMode, setMockMode } from '@/utils/mockData';
+import api from '@/lib/api';
 
 interface Producto {
   id: string;
@@ -51,7 +52,7 @@ export default function AdminVentasMinoristas() {
   const [loading, setLoading] = useState(false);
   const [mostrarVentas, setMostrarVentas] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  // Todas las llamadas se realizan vía cliente centralizado (baseURL /api/proxy)
 
   const cargarProductos = async () => {
     try {
@@ -59,11 +60,7 @@ export default function AdminVentasMinoristas() {
       
       // Intentar cargar desde backend primero
       try {
-        const response = await fetch(`${API_URL}/productos?conGanancia=true`);
-        if (!response.ok) {
-          throw new Error(`Error ${response.status}: ${response.statusText}`);
-        }
-        const response_data = await response.json();
+        const { data: response_data } = await api.get(`/productos?conGanancia=true`);
         // El backend devuelve los productos en response_data.data
         const productos_array = response_data.data || [];
         setProductos(Array.isArray(productos_array) ? productos_array : []);
@@ -93,16 +90,12 @@ export default function AdminVentasMinoristas() {
       } else {
         // Intentar cargar desde backend
         try {
-          const response = await fetch(`${API_URL}/ventas/minoristas`);
-          if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-          }
-          const response_data = await response.json();
-          // Aceptar tanto un array directo como un objeto con "data"/"results"/"items"
-          const ventas_array = Array.isArray(response_data)
-            ? response_data
-            : (response_data.data ?? response_data.results ?? response_data.items ?? []);
-          setVentas(Array.isArray(ventas_array) ? ventas_array : []);
+          const { data: response_data } = await api.get(`/ventas/minoristas`);
+           // Aceptar tanto un array directo como un objeto con "data"/"results"/"items"
+           const ventas_array = Array.isArray(response_data)
+             ? response_data
+             : (response_data.data ?? response_data.results ?? response_data.items ?? []);
+           setVentas(Array.isArray(ventas_array) ? ventas_array : []);
         } catch (backendError) {
           console.warn('Backend no disponible para ventas, usando datos mock:', backendError);
           const mockData = await mockAPI.getVentas();
@@ -236,27 +229,22 @@ export default function AdminVentasMinoristas() {
             factura: requiereFactura
           };
 
-          const response = await fetch(`${API_URL}/ventas/minoristas`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(ventaData),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Error al registrar producto ${item.producto.nombre}: ${errorData.message || 'Error desconocido'}`);
-          }
+          await api.post(`/ventas/minoristas`, ventaData);
         }
-        alert(`Venta registrada exitosamente con ${carritoProductos.length} producto(s)`);
-      }
 
-      limpiarFormulario();
-      cargarVentas(); // Recargar la lista de ventas
-    } catch (error) {
-      console.error('Error:', error);
-      alert(`Error al registrar la venta: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+        alert(`Venta registrada exitosamente con ${carritoProductos.length} producto(s) (Backend)`);
+        // Limpiar formulario
+        setCarritoProductos([]);
+        setNombreComprador('');
+        setMetodoPago('');
+        setNotas('');
+        setRequiereFactura(false);
+        // Recargar ventas
+        await cargarVentas();
+      }
+    } catch (error: any) {
+      console.error('Error al registrar venta:', error);
+      alert(error.message || 'Ocurrió un error al registrar la venta');
     } finally {
       setLoading(false);
     }
@@ -264,18 +252,15 @@ export default function AdminVentasMinoristas() {
 
   const exportarExcel = async () => {
     try {
-      const response = await fetch(`${API_URL}/ventas/minoristas/exportar-excel`);
-      if (!response.ok) throw new Error('Error al exportar');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const { data: blob } = await api.get(`/ventas/minoristas/exportar-excel`, { responseType: 'blob' });
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `ventas-minoristas-${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = 'ventas-minoristas.xlsx';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      a.remove();
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error al exportar:', error);
       alert('Error al exportar las ventas');

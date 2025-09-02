@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import Image from 'next/image';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { crearPedidoConsumidor } from '@/lib/api-client';
 
 export default function CarritoPage() {
   const { cartItems, removeFromCart, clearCart, totalItems } = useCart();
@@ -47,19 +46,7 @@ export default function CarritoPage() {
     };
 
     try {
-      const response = await fetch(`${API_URL}/usuarios/pedido-consumidor`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include', // Incluir cookies
-        body: JSON.stringify(pedido),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Hubo un problema al registrar el pedido.');
-      }
+      await crearPedidoConsumidor(pedido);
 
       setSuccess(true);
       clearCart();

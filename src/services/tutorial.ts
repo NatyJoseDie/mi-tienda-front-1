@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import api from '@/lib/api';
 
 // Interfaces para el sistema de tutorial
 export interface TutorialStep {
@@ -58,147 +58,81 @@ export interface CompletarPasoDto {
 export const tutorialService = {
   // Obtener tutorial específico
   obtenerTutorial: async (tutorialId: string): Promise<TutorialData> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/${tutorialId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al obtener tutorial');
+    try {
+      const res = await api.get(`/tutorial/${tutorialId}`);
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al obtener tutorial');
     }
-
-    return response.json();
   },
 
   // Obtener todos los tutoriales disponibles
   obtenerTutoriales: async (): Promise<TutorialData[]> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al obtener tutoriales');
+    try {
+      const res = await api.get('/tutorial');
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al obtener tutoriales');
     }
-
-    return response.json();
   },
 
   // Completar un paso del tutorial
   completarPaso: async (data: CompletarPasoDto): Promise<{ success: boolean; nextStep?: TutorialStep }> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/completar-paso`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al completar paso');
+    try {
+      const res = await api.post('/tutorial/completar-paso', data);
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al completar paso');
     }
-
-    return response.json();
   },
 
   // Obtener estadísticas del tutorial
   obtenerEstadisticas: async (): Promise<TutorialStats> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/estadisticas`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al obtener estadísticas');
+    try {
+      const res = await api.get('/tutorial/estadisticas');
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al obtener estadísticas');
     }
-
-    return response.json();
   },
 
   // Reiniciar tutorial
   reiniciarTutorial: async (tutorialId: string): Promise<{ success: boolean }> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/${tutorialId}/reiniciar`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al reiniciar tutorial');
+    try {
+      const res = await api.post(`/tutorial/${tutorialId}/reiniciar`);
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al reiniciar tutorial');
     }
-
-    return response.json();
   },
 
   // Iniciar tutorial
   iniciarTutorial: async (tutorialId: string): Promise<{ success: boolean; tutorial: TutorialData }> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/${tutorialId}/iniciar`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al iniciar tutorial');
+    try {
+      const res = await api.post(`/tutorial/${tutorialId}/iniciar`);
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al iniciar tutorial');
     }
-
-    return response.json();
   },
 
   // Obtener progreso de tutorial específico
   obtenerProgreso: async (tutorialId: string): Promise<TutorialProgress[]> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/${tutorialId}/progreso`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al obtener progreso');
+    try {
+      const res = await api.get(`/tutorial/${tutorialId}/progreso`);
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al obtener progreso');
     }
-
-    return response.json();
   },
 
   // Saltar paso (si es opcional)
   saltarPaso: async (tutorialId: string, stepId: string): Promise<{ success: boolean; nextStep?: TutorialStep }> => {
-    const response = await fetch(`${API_BASE_URL}/tutorial/saltar-paso`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Incluir cookies
-      body: JSON.stringify({ tutorialId, stepId }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Error al saltar paso');
+    try {
+      const res = await api.post('/tutorial/saltar-paso', { tutorialId, stepId });
+      return res.data;
+    } catch (e: any) {
+      throw new Error(e?.response?.data?.message || 'Error al saltar paso');
     }
-
-    return response.json();
   },
 };

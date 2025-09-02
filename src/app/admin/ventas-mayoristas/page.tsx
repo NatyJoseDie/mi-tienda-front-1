@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import api from '@/lib/api';
 
 interface Producto {
   id: string;
@@ -27,8 +28,6 @@ interface VentaMayorista {
 }
 
 export default function AdminVentasMayoristas() {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<VentaMayorista[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,11 +44,7 @@ export default function AdminVentasMayoristas() {
 
   const cargarProductos = async () => {
     try {
-      const res = await fetch(`${API_URL}/productos?conGanancia=true`, {
-        credentials: 'include' // Incluir cookies
-      });
-      if (!res.ok) throw new Error('Error cargando productos');
-      const data = await res.json();
+      const { data } = await api.get(`/productos?conGanancia=true`);
       const arr = Array.isArray(data) ? data : (data.data ?? []);
       setProductos(arr);
     } catch (e) {
@@ -60,29 +55,19 @@ export default function AdminVentasMayoristas() {
 
   const cargarPrecioSugerido = async (productoId: string) => {
     try {
-      const res = await fetch(`${API_URL}/ventas/mayoristas/precio-sugerido/${productoId}`, {
-        credentials: 'include' // Incluir cookies
-      });
-      if (res.ok) {
-        const data = await res.json();
-        // data contiene: precio_costo, precio_mayorista_sugerido, ganancia_porcentaje, stock_disponible
-        setPrecioVenta(data.precio_mayorista_sugerido || 0);
-        return data;
-      }
+      const { data } = await api.get(`/ventas/mayoristas/precio-sugerido/${productoId}`);
+      setPrecioVenta(data?.precio_mayorista_sugerido || 0);
+      return data;
     } catch (e) {
       console.warn('No se pudo obtener precio sugerido', e);
+      return null;
     }
-    return null;
   };
 
   const cargarVentas = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/ventas/mayoristas`, {
-        credentials: 'include' // Incluir cookies
-      });
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const data = await res.json();
+      const { data } = await api.get(`/ventas/mayoristas`);
       const arr = Array.isArray(data) ? data : (data.data ?? data.results ?? data.items ?? []);
       setVentas(Array.isArray(arr) ? arr : []);
     } catch (e) {
@@ -128,40 +113,12 @@ export default function AdminVentasMayoristas() {
 
     try {
       setLoading(true);
-      const body: any = {
-        producto_id: productoSel.id,
-        cantidad,
-        nombre_tienda: nombreTienda,
-        metodo_pago: metodoPago || undefined,
-        notas: notas || undefined,
-      };
-      
-      // Solo incluir precio_venta si el usuario lo modificó manualmente
-      // Si está en 0 o es el precio sugerido, dejamos que el backend calcule automáticamente
-      if (precioVenta > 0) {
-        body.precio_venta = precioVenta;
-      }
-
-      const res = await fetch(`${API_URL}/ventas/mayoristas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Incluir cookies
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.message || 'Error registrando la venta');
-      }
+      const body: any = { producto_id: productoSel!.id, cantidad, nombre_tienda: nombreTienda, metodo_pago: metodoPago || undefined, notas: notas || undefined };
+      if (precioVenta > 0) body.precio_venta = precioVenta;
+      await api.post(`/ventas/mayoristas`, body);
       alert('Venta mayorista registrada correctamente con precio automático (30% ganancia)');
-      // limpiar
-      setProductoId('');
-      setCantidad(1);
-      setPrecioVenta(0);
-      setNombreTienda('');
-      setMetodoPago('');
-      setNotas('');
-      cargarVentas();
-      setMostrarVentas(true);
+      setProductoId(''); setCantidad(1); setPrecioVenta(0); setNombreTienda(''); setMetodoPago(''); setNotas('');
+      cargarVentas(); setMostrarVentas(true);
     } catch (e: any) {
       console.error(e);
       alert(e?.message || 'Error desconocido');
@@ -172,18 +129,11 @@ export default function AdminVentasMayoristas() {
 
   const exportarExcel = async () => {
     try {
-      const res = await fetch(`${API_URL}/ventas/mayoristas/exportar-excel`, {
-        credentials: 'include' // Incluir cookies
-      });
-      if (!res.ok) throw new Error('No se pudo exportar');
-      const blob = await res.blob();
+      const { data: blob } = await api.get(`/ventas/mayoristas/exportar-excel`, { responseType: 'blob' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ventas-mayoristas.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      a.href = url; a.download = 'ventas-mayoristas.xlsx';
+      document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     } catch (e) {
       console.error(e);

@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { CheckIcon, StarIcon, CreditCardIcon, GiftIcon } from '@heroicons/react/24/outline';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { solicitarInfoPlanes } from '@/lib/api-client';
 
 interface ContactoConPlanesForm {
   nombre: string;
@@ -130,23 +129,15 @@ const PaquetesPage: React.FC = () => {
 
     try {
       // Paso 1: Enviar solicitud
-      const response = await fetch(`${API_URL}/contacto/solicitar-info`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nombre: formData.nombre,
-          email: formData.email,
-          telefono: formData.telefono,
-          mensaje: formData.mensaje,
-          planSeleccionado: formData.planSeleccionado
-        }),
+      const data = await solicitarInfoPlanes({
+        nombre: formData.nombre,
+        email: formData.email,
+        telefono: formData.telefono,
+        mensaje: formData.mensaje,
+        planSeleccionado: formData.planSeleccionado
       });
 
-      if (response.ok) {
-        // Paso 2: Procesar respuesta y redirigir al link de pago
-        const data = await response.json();
+      // Paso 2: Procesar respuesta y redirigir al link de pago
         
         if (planSeleccionado === 'free') {
           setMensaje('✅ ¡Solicitud enviada exitosamente! Hemos enviado un código de activación a tu email. Revisa tu bandeja de entrada (y spam) para comenzar con el plan gratuito.');
@@ -177,9 +168,6 @@ const PaquetesPage: React.FC = () => {
             setPlanSeleccionado(null);
           }
         }
-      } else {
-        setMensaje('❌ Error al enviar la solicitud. Por favor, verifica tus datos e intenta nuevamente.');
-      }
     } catch (error) {
       setMensaje('❌ Error de conexión. Por favor, verifica tu conexión a internet e intenta nuevamente.');
     } finally {

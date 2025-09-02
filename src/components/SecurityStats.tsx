@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { getSecurityStats } from '@/lib/api-client';
 interface SecurityStats {
   totalAttempts: number;
   failedAttempts: number;
@@ -68,21 +69,7 @@ const SecurityStats: React.FC<SecurityStatsProps> = ({
   const fetchStats = async () => {
     try {
       setError('');
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const response = await fetch(`${API_URL}/auth/security-stats`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al obtener estadísticas');
-      }
-
-      const stats = await response.json();
+      const stats = await getSecurityStats();
       setData(stats);
       setLastRefresh(new Date());
     } catch (err: any) {

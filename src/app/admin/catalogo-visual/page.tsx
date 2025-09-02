@@ -11,6 +11,7 @@ import {
   StarIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import api from '@/lib/api';
 
 interface ProductoCatalogo {
   id: string;
@@ -24,130 +25,102 @@ interface ProductoCatalogo {
   destacado?: boolean;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-
 export default function AdminCatalogoVisual() {
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState<ProductoCatalogo | null>(null);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('todas');
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ProductoCatalogo | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [dragOverGallery, setDragOverGallery] = useState(false);
+  
+  // Estados para vista previa de imágenes
   const [imagePreviewModal, setImagePreviewModal] = useState(false);
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
-
-  useEffect(() => {
-    cargarCatalogoVisual();
-  }, []);
-
-  const cargarCatalogoVisual = async () => {
+  // Cargar productos del catálogo
+  const cargarProductos = async () => {
     try {
-      const response = await fetch(`${API_URL}/catalogo/visual`);
-      if (response.ok) {
-        const data = await response.json();
-        setProductos(data);
-      } else {
-        console.error('Error al obtener catálogo visual:', response.status);
-      }
+      setLoading(true);
+      const response = await api.get('/catalogo/productos');
+      setProductos(response.data);
+      setError(null);
     } catch (error) {
-      console.error('Error al cargar catálogo:', error);
+      console.error('Error al cargar productos:', error);
+      setError('Error al cargar los productos del catálogo');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleDestacar = async (productId: string, destacado: boolean) => {
-    try {
-      const response = await fetch(`${API_URL}/productos/${productId}/destacar`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ destacado }),
-      });
+  // useEffect para cargar productos al montar el componente
+  useEffect(() => {
+    cargarProductos();
+  }, []);
 
-      if (response.ok) {
-        setProductos(prev => prev.map(p => 
-          p.id === productId ? { ...p, destacado } : p
-        ));
-        alert(destacado ? 'Producto destacado correctamente' : 'Producto quitado de destacados');
-      } else {
-        alert('Error al actualizar el estado de destacado');
-      }
-    } catch (error) {
-      console.error('Error al destacar producto:', error);
-      alert('Error al actualizar el estado de destacado');
-    }
-  };
-
-  const actualizarImagenPrincipal = async (productId: string, file: File) => {
-    setUploading(true);
+  // Actualizar imagen principal
+  const actualizarImagenPrincipal = async (productoId: string, file: File) => {
     try {
+      setUploading(true);
       const formData = new FormData();
       formData.append('imagen', file);
-
-      const response = await fetch(`${API_URL}/catalogo/producto/${productId}/imagen-principal`, {
-        method: 'PUT',
-        body: formData,
+      
+      const response = await api.patch(`/catalogo/producto/${productoId}/imagen-principal`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-
-      if (response.ok) {
-        // Recargar la lista completa
-        await cargarCatalogoVisual();
-        
-        // Buscar y actualizar el producto seleccionado desde la lista ya cargada
-        setProductos(prevProductos => {
-          const updatedProduct = prevProductos.find(p => p.id === productId);
-          if (updatedProduct && selectedProduct) {
-            setSelectedProduct(updatedProduct);
-          }
-          return prevProductos;
-        });
-        
-        alert('✅ Imagen principal actualizada correctamente');
+      
+      if (response.status === 200) {
+        // Actualizar la imagen en el estado local
+        const nuevaImagenUrl = response.data.imagen_principal;
+        setProductos(prev => 
+          prev.map(p => p.id === productoId ? {...p, imagen_principal: nuevaImagenUrl} : p)
+        );
+        if (selectedProduct?.id === productoId) {
+          setSelectedProduct(prev => prev ? {...prev, imagen_principal: nuevaImagenUrl} : null);
+        }
+        console.log('✅ Imagen principal actualizada');
       }
     } catch (error) {
-      console.error('Error al actualizar imagen:', error);
-      alert('❌ Error al actualizar la imagen');
+      console.error('Error al actualizar imagen principal:', error);
+      alert('❌ Error al actualizar la imagen principal');
     } finally {
       setUploading(false);
     }
   };
 
-  const agregarImagenes = async (productId: string, files: FileList) => {
-    setUploading(true);
+  // Agregar imágenes a la galería
+  const agregarImagenes = async (productoId: string, files: FileList) => {
     try {
+      setUploading(true);
       const formData = new FormData();
+      
       Array.from(files).forEach(file => {
         formData.append('imagenes', file);
       });
-
-      const response = await fetch(`${API_URL}/catalogo/producto/${productId}/imagenes`, {
-        method: 'POST',
-        body: formData,
+      
+      const response = await api.post(`/catalogo/producto/${productoId}/imagenes`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
-
-      if (response.ok) {
-        // Recargar la lista completa
-        await cargarCatalogoVisual();
-        
-        // Buscar y actualizar el producto seleccionado desde la lista ya cargada
-        setProductos(prevProductos => {
-          const updatedProduct = prevProductos.find(p => p.id === productId);
-          if (updatedProduct && selectedProduct) {
-            setSelectedProduct(updatedProduct);
-          }
-          return prevProductos;
-        });
-        
-        alert('✅ Imágenes agregadas correctamente');
+      
+      if (response.status === 200) {
+        // Actualizar las imágenes en el estado local
+        const nuevasImagenes = response.data.imagenes;
+        setProductos(prev => 
+          prev.map(p => p.id === productoId ? {...p, imagenes: nuevasImagenes} : p)
+        );
+        if (selectedProduct?.id === productoId) {
+          setSelectedProduct(prev => prev ? {...prev, imagenes: nuevasImagenes} : null);
+        }
+        console.log('✅ Imágenes agregadas a la galería');
       }
     } catch (error) {
       console.error('Error al agregar imágenes:', error);
@@ -157,66 +130,118 @@ export default function AdminCatalogoVisual() {
     }
   };
 
-  const eliminarImagen = async (productId: string, imagen: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta imagen?')) return;
-
+  // Eliminar imagen principal
+  const eliminarImagenPrincipal = async (productoId: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar la imagen principal?')) return;
+    
     try {
-      const response = await fetch(`${API_URL}/catalogo/producto/${productId}/imagen`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imagen }),
-      });
-
-      if (response.ok) {
-        // Recargar la lista completa
-        await cargarCatalogoVisual();
-        
-        // Buscar y actualizar el producto seleccionado desde la lista ya cargada
-        setProductos(prevProductos => {
-          const updatedProduct = prevProductos.find(p => p.id === productId);
-          if (updatedProduct && selectedProduct) {
-            setSelectedProduct(updatedProduct);
-          }
-          return prevProductos;
-        });
-        
-        alert('✅ Imagen eliminada correctamente');
-      }
-    } catch (error) {
-      console.error('Error al eliminar imagen:', error);
-      alert('❌ Error al eliminar la imagen');
-    }
-  };
-
-  const eliminarImagenPrincipal = async (productId: string) => {
-    if (!confirm('¿Estás seguro de eliminar la imagen principal?')) return;
-
-    try {
-      const response = await fetch(`${API_URL}/catalogo/producto/${productId}/imagen-principal`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (response.ok) {
-        // Recargar la lista completa
-        await cargarCatalogoVisual();
-        
-        // Buscar y actualizar el producto seleccionado desde la lista ya cargada
-        setProductos(prevProductos => {
-          const updatedProduct = prevProductos.find(p => p.id === productId);
-          if (updatedProduct && selectedProduct) {
-            setSelectedProduct(updatedProduct);
-          }
-          return prevProductos;
-        });
-        
-        alert('✅ Imagen principal eliminada correctamente');
+      setUploading(true);
+      const response = await api.delete(`/catalogo/producto/${productoId}/imagen-principal`);
+      
+      if (response.status === 200) {
+        // Actualizar el estado local
+        setProductos(prev => 
+          prev.map(p => p.id === productoId ? {...p, imagen_principal: null} : p)
+        );
+        if (selectedProduct?.id === productoId) {
+          setSelectedProduct(prev => prev ? {...prev, imagen_principal: null} : null);
+        }
+        console.log('✅ Imagen principal eliminada');
       }
     } catch (error) {
       console.error('Error al eliminar imagen principal:', error);
       alert('❌ Error al eliminar la imagen principal');
+    } finally {
+      setUploading(false);
     }
   };
+
+  // Eliminar imagen de la galería
+  const eliminarImagen = async (productoId: string, imagenUrl: string) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return;
+    
+    try {
+      setUploading(true);
+      const response = await api.delete(`/catalogo/producto/${productoId}/imagen`, {
+        data: { imagen_url: imagenUrl }
+      });
+      
+      if (response.status === 200) {
+        // Actualizar el estado local
+        const nuevasImagenes = response.data.imagenes;
+        setProductos(prev => 
+          prev.map(p => p.id === productoId ? {...p, imagenes: nuevasImagenes} : p)
+        );
+        if (selectedProduct?.id === productoId) {
+          setSelectedProduct(prev => prev ? {...prev, imagenes: nuevasImagenes} : null);
+        }
+        console.log('✅ Imagen eliminada de la galería');
+      }
+    } catch (error) {
+      console.error('Error al eliminar imagen:', error);
+      alert('❌ Error al eliminar la imagen');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Alternar destacado
+  const toggleDestacado = async (productoId: string, destacado: boolean) => {
+    try {
+      const response = await api.patch(`/catalogo/producto/${productoId}/destacado`, {
+        destacado: !destacado
+      });
+      
+      if (response.status === 200) {
+        // Actualizar el estado local
+        setProductos(prev => 
+          prev.map(p => p.id === productoId ? {...p, destacado: !destacado} : p)
+        );
+        console.log(`✅ Producto ${!destacado ? 'destacado' : 'no destacado'}`);
+      }
+    } catch (error) {
+      console.error('Error al cambiar destacado:', error);
+      alert('❌ Error al cambiar el estado destacado');
+    }
+  };
+
+  // Descargar catálogo PDF
+  const descargarCatalogoPDF = async () => {
+    try {
+      const response = await api.get('/catalogo/descargar-pdf', {
+        responseType: 'blob'
+      });
+      
+      // Crear un enlace de descarga
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'catalogo-productos.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ Catálogo PDF descargado');
+    } catch (error) {
+      console.error('Error al descargar PDF:', error);
+      alert('❌ Error al descargar el catálogo PDF');
+    }
+  };
+
+  const categorias = [...new Set(productos.map(p => p.categoria).filter(Boolean))];
+
+
+
+
+
+
+
+
+
+
+
+
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -289,25 +314,7 @@ export default function AdminCatalogoVisual() {
     setZoomLevel(1);
   };
 
-  const descargarCatalogoPDF = async () => {
-    try {
-      const response = await fetch(`${API_URL}/catalogo/descargar/catalogo-visual/pdf`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'catalogo-visual.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }
-    } catch (error) {
-      console.error('Error al descargar PDF:', error);
-      alert('Error al descargar el catálogo');
-    }
-  };
+
 
   const productosFiltrados = productos.filter(producto => {
     const matchesSearch = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -451,7 +458,7 @@ export default function AdminCatalogoVisual() {
               {/* Botones de acción */}
               <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                 <button
-                  onClick={() => toggleDestacar(producto.id, !producto.destacado)}
+                  onClick={() => toggleDestacado(producto.id, producto.destacado || false)}
                   className={`p-2 rounded-xl shadow-lg transition-all duration-300 transform hover:scale-110 ${
                     producto.destacado 
                       ? 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-white shadow-yellow-500/25' 
@@ -587,29 +594,21 @@ export default function AdminCatalogoVisual() {
                   <button
                     onClick={async () => {
                       try {
-                        const response = await fetch(`${API_URL}/catalogo/producto/${selectedProduct.id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            nombre: selectedProduct.nombre,
-                            descripcion: selectedProduct.descripcion
-                          })
+                        const response = await api.patch(`/catalogo/producto/${selectedProduct.id}`, {
+                          nombre: selectedProduct.nombre,
+                          descripcion: selectedProduct.descripcion
                         });
                         
-                        if (response.ok) {
+                        if (response.status === 200) {
                           // Actualizar la lista local
                           setProductos(prev => 
                             prev.map(p => p.id === selectedProduct.id ? {...p, ...selectedProduct} : p)
                           );
                           alert('✅ Información actualizada correctamente');
-                        } else {
-                          const errorText = await response.text();
-                          console.error('Error del backend:', errorText);
-                          alert('❌ Error al actualizar la información');
                         }
                       } catch (error) {
-                        console.error('Error de conexión:', error);
-                        alert('❌ Error de conexión');
+                        console.error('Error al actualizar información:', error);
+                        alert('❌ Error al actualizar la información');
                       }
                     }}
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center gap-2"

@@ -49,7 +49,7 @@ const ProductCard = ({ producto }: ProductCardProps) => {
   };
 
   return (
-    <Link href={`/productos/${producto.id}`} className="block group relative h-96 w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:rotate-1">
+    <Link prefetch={false} href={`/productos/${producto.id}`} className="block group relative h-96 w-full overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:rotate-1">
       {/* Imagen de Fondo con Efectos */}
       <Image
         src={getImageUrl()}

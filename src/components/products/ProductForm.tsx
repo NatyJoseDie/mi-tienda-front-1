@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Producto } from '@/types/producto';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { getCategorias, crearCategoria } from '@/lib/api-client';
 
 interface ProductFormProps {
   initialData?: Partial<Producto>;
@@ -53,18 +52,9 @@ export default function ProductForm({ initialData = {}, onSubmitAction, onCancel
   const fetchCategorias = async () => {
     try {
       setLoadingCategorias(true);
-      console.log('Intentando cargar categorías desde:', `${API_URL}/categorias`);
+      console.log('Cargando categorías...');
       
-      const response = await fetch(`${API_URL}/categorias`);
-      console.log('Respuesta del servidor:', response.status, response.statusText);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error en la respuesta:', errorText);
-        throw new Error(`Error al cargar categorías: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      const data = await getCategorias();
       console.log('Categorías recibidas:', data);
       console.log('Número de categorías:', data.length);
       
@@ -96,23 +86,10 @@ export default function ProductForm({ initialData = {}, onSubmitAction, onCancel
       setCreatingCategory(true);
       setError(null);
       
-      const response = await fetch(`${API_URL}/categorias`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nombre: newCategoryName.trim(),
-          descripcion: newCategoryDescription.trim() || undefined,
-        }),
+      const newCategory = await crearCategoria({
+        nombre: newCategoryName.trim(),
+        descripcion: newCategoryDescription.trim() || undefined,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear la categoría');
-      }
-
-      const newCategory = await response.json();
       
       // Actualizar la lista de categorías
       setCategorias(prev => [...prev, newCategory]);

@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { PlusIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import api from '@/lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 type CompraItemInput = {
   id: string; // client-side id
@@ -45,9 +45,7 @@ export default function AdminCompras() {
   async function cargarCompras() {
     try {
       setCargandoCompras(true);
-      const res = await fetch(`${API_URL}/compras`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const { data } = await api.get('/compras');
       setCompras(Array.isArray(data) ? data : []);
     } catch (e: any) {
       console.error('Error al cargar compras:', e);
@@ -110,18 +108,7 @@ export default function AdminCompras() {
         })),
       };
 
-      const res = await fetch(`${API_URL}/compras`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        console.error('Fallo registrar compra:', { status: res.status, text });
-        setError(`No se pudo registrar la compra (HTTP ${res.status})`);
-        return;
-      }
+      const { status } = await api.post('/compras', payload);
 
       // Reset form
       setProveedor('');
@@ -132,7 +119,7 @@ export default function AdminCompras() {
       alert('✅ Compra registrada correctamente');
     } catch (e: any) {
       console.error(e);
-      setError('Error de conexión');
+      setError(e?.response?.data?.message || 'Error de conexión');
     } finally {
       setEnviando(false);
     }
@@ -178,65 +165,74 @@ export default function AdminCompras() {
         {/* Items */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">Nombre</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">Producto ID</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">Cantidad</th>
-                <th className="px-3 py-2 text-left font-medium text-gray-600">Precio unit.</th>
-                <th className="px-3 py-2 text-right font-medium text-gray-600">Subtotal</th>
-                <th className="px-3 py-2"></th>
+            <thead>
+              <tr className="bg-gray-50 text-gray-700">
+                <th className="px-3 py-2 text-left">Producto/Nombre</th>
+                <th className="px-3 py-2 text-left w-28">Cantidad</th>
+                <th className="px-3 py-2 text-left w-28">Precio</th>
+                <th className="px-3 py-2 text-left w-28">Subtotal</th>
+                <th className="px-3 py-2 text-left w-16">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {items.map((it) => (
-                <tr key={it.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-2 min-w-[220px]">
-                    <input
-                      value={it.nombre || ''}
-                      onChange={(e) => editarItem(it.id, 'nombre', e.target.value)}
-                      placeholder="Tornillo 6mm"
-                      className="w-full border rounded-lg px-2 py-1"
-                    />
+                <tr key={it.id}>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        placeholder="Nombre manual (opcional)"
+                        value={it.nombre || ''}
+                        onChange={(e) => editarItem(it.id, 'nombre', e.target.value)}
+                        className="border rounded px-2 py-1 w-64"
+                      />
+                      <span className="text-xs text-gray-500">o</span>
+                      <input
+                        placeholder="producto_id"
+                        value={it.producto_id || ''}
+                        onChange={(e) => editarItem(it.id, 'producto_id', e.target.value)}
+                        className="border rounded px-2 py-1 w-48"
+                      />
+                    </div>
                   </td>
-                  <td className="px-3 py-2 min-w-[220px]">
-                    <input
-                      value={it.producto_id || ''}
-                      onChange={(e) => editarItem(it.id, 'producto_id', e.target.value)}
-                      placeholder="uuid existente (opcional)"
-                      className="w-full border rounded-lg px-2 py-1"
-                    />
-                  </td>
-                  <td className="px-3 py-2 w-[120px]">
+                  <td className="px-3 py-2">
                     <input
                       type="number"
                       min={1}
                       value={it.cantidad}
                       onChange={(e) => editarItem(it.id, 'cantidad', Number(e.target.value))}
-                      className="w-full border rounded-lg px-2 py-1"
+                      className="border rounded px-2 py-1 w-24"
                     />
                   </td>
-                  <td className="px-3 py-2 w-[160px]">
+                  <td className="px-3 py-2">
                     <input
                       type="number"
                       min={0}
                       step={0.01}
                       value={it.precio_unitario}
                       onChange={(e) => editarItem(it.id, 'precio_unitario', Number(e.target.value))}
-                      className="w-full border rounded-lg px-2 py-1"
+                      className="border rounded px-2 py-1 w-24"
                     />
                   </td>
-                  <td className="px-3 py-2 text-right font-medium">
-                    ${(Number(it.cantidad) * Number(it.precio_unitario) || 0).toLocaleString('es-AR')}
+                  <td className="px-3 py-2">
+                    ${(Number(it.cantidad) * Number(it.precio_unitario)).toFixed(2)}
                   </td>
-                  <td className="px-3 py-2 text-right">
-                    <button
-                      onClick={() => eliminarItem(it.id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                      title="Eliminar"
-                    >
-                      <TrashIcon className="w-5 h-5" />
-                    </button>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => eliminarItem(it.id)}
+                        className="text-red-600 hover:bg-red-50 p-2 rounded"
+                        title="Eliminar"
+                      >
+                        <TrashIcon className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={agregarItem}
+                        className="text-gray-700 hover:bg-gray-50 p-2 rounded"
+                        title="Agregar"
+                      >
+                        <PlusIcon className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -245,154 +241,64 @@ export default function AdminCompras() {
         </div>
 
         <div className="flex items-center justify-between mt-4">
-          <button
-            onClick={agregarItem}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border hover:bg-gray-50"
-          >
-            <PlusIcon className="w-5 h-5" /> Agregar ítem
-          </button>
-          <div className="text-right text-gray-800">
-            <div className="text-sm">Total</div>
-            <div className="text-2xl font-bold">${totalItems().toLocaleString('es-AR')}</div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-            {error}
-          </div>
-        )}
-
-        {erroresFormulario.length > 0 && !error && (
-          <div className="mt-4 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
-            • {erroresFormulario[0]}
-          </div>
-        )}
-
-        <div className="mt-6 flex gap-3">
+          <div className="text-xl font-semibold">Total: ${totalItems().toFixed(2)}</div>
           <button
             onClick={registrarCompra}
             disabled={enviando}
-            className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            {enviando ? 'Enviando…' : 'Registrar compra'}
-          </button>
-          <button
-            onClick={cargarCompras}
-            disabled={cargandoCompras}
-            className="px-6 py-3 rounded-lg border hover:bg-gray-50 inline-flex items-center gap-2"
-          >
-            <ArrowPathIcon className={`w-5 h-5 ${cargandoCompras ? 'animate-spin' : ''}`} />
-            Refrescar listado
+            {enviando ? 'Guardando...' : 'Registrar compra'}
           </button>
         </div>
       </div>
 
       {/* Listado de compras */}
-      <div className="bg-white rounded-xl shadow-sm border">
-        <div className="p-6 border-b flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">Compras recientes</h2>
+      <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Compras recientes</h2>
           <button
             onClick={cargarCompras}
-            className="px-3 py-2 rounded-lg border hover:bg-gray-50 inline-flex items-center gap-2"
+            className="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-2"
           >
-            <ArrowPathIcon className={`w-5 h-5 ${cargandoCompras ? 'animate-spin' : ''}`} />
+            <ArrowPathIcon className="w-5 h-5" />
             Actualizar
           </button>
         </div>
-        {/* Vista de tabla para desktop */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm min-w-[768px]">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-600">Fecha</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-600">Proveedor</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-600">Observaciones</th>
-                <th className="px-6 py-3 text-left font-medium text-gray-600">Ítems</th>
-                <th className="px-6 py-3 text-right font-medium text-gray-600">Total</th>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-gray-50 text-gray-700">
+                <th className="px-3 py-2 text-left">Fecha</th>
+                <th className="px-3 py-2 text-left">Proveedor</th>
+                <th className="px-3 py-2 text-left">Observaciones</th>
+                <th className="px-3 py-2 text-left">Ítems</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {compras.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                    {cargandoCompras ? 'Cargando…' : 'Sin compras registradas'}
+              {compras.map((c) => (
+                <tr key={c.id}>
+                  <td className="px-3 py-2">{new Date(c.fecha).toLocaleString()}</td>
+                  <td className="px-3 py-2">{c.proveedor}</td>
+                  <td className="px-3 py-2">{c.observaciones || '-'}</td>
+                  <td className="px-3 py-2">
+                    <ul className="list-disc list-inside space-y-1">
+                      {c.compra_items?.map((it, idx) => (
+                        <li key={idx}>
+                          {it.productos?.nombre || it.producto_id || it.cantidad} x ${it.precio_unitario}
+                        </li>
+                      ))}
+                    </ul>
                   </td>
                 </tr>
-              )}
-              {compras.map((c) => {
-                const total = (c.compra_items || []).reduce(
-                  (acc, it) => acc + Number(it.cantidad || 0) * Number(it.precio_unitario || 0),
-                  0
-                );
-                return (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3">{new Date(c.fecha).toLocaleString('es-AR')}</td>
-                    <td className="px-6 py-3">{c.proveedor}</td>
-                    <td className="px-6 py-3">{c.observaciones || '-'}</td>
-                    <td className="px-6 py-3">
-                      <ul className="list-disc ml-5">
-                        {(c.compra_items || []).map((ci, idx) => (
-                          <li key={idx}>
-                            {ci.productos?.nombre || ci.producto_id || 'Producto'} × {ci.cantidad} @ ${ci.precio_unitario}
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td className="px-6 py-3 text-right font-semibold">${total.toLocaleString('es-AR')}</td>
-                  </tr>
-                );
-              })}
+              ))}
             </tbody>
           </table>
         </div>
 
-        {/* Vista de tarjetas para móvil */}
-        <div className="md:hidden space-y-4 p-4">
-          {compras.length === 0 ? (
-            <div className="text-center text-gray-500 py-8">
-              {cargandoCompras ? 'Cargando…' : 'Sin compras registradas'}
-            </div>
-          ) : (
-            compras.map((c) => {
-              const total = (c.compra_items || []).reduce(
-                (acc, it) => acc + Number(it.cantidad || 0) * Number(it.precio_unitario || 0),
-                0
-              );
-              return (
-                <div key={c.id} className="bg-gray-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium text-gray-900">{c.proveedor}</div>
-                      <div className="text-sm text-gray-500">{new Date(c.fecha).toLocaleString('es-AR')}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-lg">${total.toLocaleString('es-AR')}</div>
-                    </div>
-                  </div>
-                  
-                  {c.observaciones && (
-                    <div>
-                      <div className="text-sm font-medium text-gray-700">Observaciones:</div>
-                      <div className="text-sm text-gray-600">{c.observaciones}</div>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <div className="text-sm font-medium text-gray-700 mb-2">Ítems:</div>
-                    <div className="space-y-1">
-                      {(c.compra_items || []).map((ci, idx) => (
-                        <div key={idx} className="text-sm text-gray-600 bg-white rounded px-2 py-1">
-                          {ci.productos?.nombre || ci.producto_id || 'Producto'} × {ci.cantidad} @ ${ci.precio_unitario}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        {cargandoCompras && (
+          <div className="text-sm text-gray-500 mt-2">Cargando compras...</div>
+        )}
       </div>
     </div>
   );

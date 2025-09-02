@@ -1,6 +1,6 @@
 // src/services/pedidos.ts
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import api from '@/lib/api';
 
 export interface PedidoItem {
   id: string;
@@ -26,33 +26,23 @@ export interface Pedido {
   productos?: any[];
 }
 
-
-
 export class PedidosService {
   private getAuthHeaders() {
     return {
       'Content-Type': 'application/json'
-    };
+    } as Record<string, string>;
   }
 
   async obtenerPedidos(): Promise<Pedido[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/productos/admin/pedidos`, {
-        method: 'GET',
+      const res = await api.get('/productos/admin/pedidos', {
         headers: this.getAuthHeaders(),
-        credentials: 'include', // Incluir cookies
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
-
-      const data = await response.json();
-      return Array.isArray(data) ? data : data.data || [];
+      const data = res.data;
+      return Array.isArray(data) ? data : data?.data || [];
     } catch (error) {
       console.error('Error al obtener pedidos:', error);
-      throw error;
+      throw error as any;
     }
   }
 
@@ -63,40 +53,24 @@ export class PedidosService {
         body.entrega_manual = true;
       }
 
-      const response = await fetch(`${API_BASE_URL}/productos/admin/pedidos/${pedidoId}/estado`, {
-        method: 'PATCH',
+      await api.patch(`/productos/admin/pedidos/${pedidoId}/estado`, body, {
         headers: this.getAuthHeaders(),
-        credentials: 'include', // Incluir cookies
-        body: JSON.stringify(body)
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
     } catch (error) {
       console.error('Error al actualizar estado del pedido:', error);
-      throw error;
+      throw error as any;
     }
   }
 
   async obtenerPedidoPorId(pedidoId: string): Promise<Pedido> {
     try {
-      const response = await fetch(`${API_BASE_URL}/productos/admin/pedidos/${pedidoId}`, {
-        method: 'GET',
+      const res = await api.get(`/productos/admin/pedidos/${pedidoId}`, {
         headers: this.getAuthHeaders(),
-        credentials: 'include', // Incluir cookies
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
-
-      return await response.json();
+      return res.data as Pedido;
     } catch (error) {
       console.error('Error al obtener pedido por ID:', error);
-      throw error;
+      throw error as any;
     }
   }
 }

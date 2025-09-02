@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import { confirmarRecepcionPedido } from '@/lib/api-client';
 
 type EstadoUI = 'loading' | 'success' | 'error';
 
@@ -16,36 +15,23 @@ export default function ConfirmarRecepcionPage() {
   useEffect(() => {
     const confirmar = async () => {
       try {
-        const resp = await fetch(`${API_URL}/productos/pedidos/${pedidoId}/confirmar-recepcion`, {
-          method: 'POST',
-        });
-
-        const text = await resp.text().catch(() => '');
-        let data: any = null;
-        try { data = JSON.parse(text); } catch {}
-
-        if (resp.ok) {
-          // Backend retorna { ok: true, mensaje } en nuestro controlador
-          const msg = data?.mensaje || text || '¡Gracias! Confirmamos que recibiste tu pedido.';
+        const data = await confirmarRecepcionPedido(pedidoId);
+        const msg = data?.mensaje || '¡Gracias! Confirmamos que recibiste tu pedido.';
+        setMensaje(msg);
+        setEstado('success');
+        // Redirigir opcionalmente después de 6s
+        setTimeout(() => router.push('/'), 6000);
+      } catch (e: any) {
+        // Si viene mensaje de "ya estaba confirmado", tratar como éxito amigable
+        const msg = e.response?.data?.mensaje || e.message || 'No se pudo confirmar la recepción';
+        if (/ya estaba confirmado/i.test(msg)) {
           setMensaje(msg);
           setEstado('success');
-          // Redirigir opcionalmente después de 6s
           setTimeout(() => router.push('/'), 6000);
         } else {
-          // Si viene mensaje de "ya estaba confirmado", tratar como éxito amigable
-          const msg = data?.mensaje || text || 'No se pudo confirmar la recepción';
-          if (/ya estaba confirmado/i.test(msg)) {
-            setMensaje(msg);
-            setEstado('success');
-            setTimeout(() => router.push('/'), 6000);
-          } else {
-            setMensaje(msg);
-            setEstado('error');
-          }
+          setMensaje(msg);
+          setEstado('error');
         }
-      } catch (e: any) {
-        setMensaje('No se pudo conectar con el servidor. Intenta más tarde.');
-        setEstado('error');
       }
     };
 

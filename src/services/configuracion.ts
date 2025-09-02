@@ -1,16 +1,12 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+import api from '@/lib/api';
 
 export const configuracionAPI = {
   // Obtener configuración general
   obtenerConfiguracion: async () => {
     try {
-      const response = await fetch(`${API_BASE}/configuracion`);
-      if (!response.ok) {
-        throw new Error('Error al obtener configuración');
-      }
-      const text = await response.text();
-      if (!text) {
-        // Si no hay respuesta, devolver configuración por defecto
+      const res = await api.get('/configuracion');
+      const data = res.data;
+      if (!data || (typeof data === 'string' && data.trim() === '')) {
         return {
           visual: {
             color_primario: '#3B82F6',
@@ -24,10 +20,9 @@ export const configuracionAPI = {
           }
         };
       }
-      return JSON.parse(text);
+      return data;
     } catch (error) {
-      console.error('Error parsing JSON:', error);
-      // Devolver configuración por defecto en caso de error
+      console.error('Error al obtener configuración:', error);
       return {
         visual: {
           color_primario: '#3B82F6',
@@ -46,21 +41,18 @@ export const configuracionAPI = {
   // Obtener configuración visual
   obtenerConfiguracionVisual: async () => {
     try {
-      const response = await fetch(`${API_BASE}/configuracion/visual`);
-      if (!response.ok) {
-        throw new Error('Error al obtener configuración visual');
-      }
-      const text = await response.text();
-      if (!text) {
+      const res = await api.get('/configuracion/visual');
+      const data = res.data;
+      if (!data || (typeof data === 'string' && data.trim() === '')) {
         return {
           color_primario: '#3B82F6',
           color_secundario: '#64748B',
           fuente_principal: 'Inter'
         };
       }
-      return JSON.parse(text);
+      return data;
     } catch (error) {
-      console.error('Error parsing JSON:', error);
+      console.error('Error al obtener configuración visual:', error);
       return {
         color_primario: '#3B82F6',
         color_secundario: '#64748B',
@@ -72,21 +64,18 @@ export const configuracionAPI = {
   // Obtener configuración de negocio
   obtenerConfiguracionNegocio: async () => {
     try {
-      const response = await fetch(`${API_BASE}/configuracion/negocio`);
-      if (!response.ok) {
-        throw new Error('Error al obtener configuración de negocio');
-      }
-      const text = await response.text();
-      if (!text) {
+      const res = await api.get('/configuracion/negocio');
+      const data = res.data;
+      if (!data || (typeof data === 'string' && data.trim() === '')) {
         return {
           nombre_tienda: 'Mi Tienda',
           descripcion: 'Descripción de la tienda',
           redes_sociales: {}
         };
       }
-      return JSON.parse(text);
+      return data;
     } catch (error) {
-      console.error('Error parsing JSON:', error);
+      console.error('Error al obtener configuración de negocio:', error);
       return {
         nombre_tienda: 'Mi Tienda',
         descripcion: 'Descripción de la tienda',
@@ -97,84 +86,46 @@ export const configuracionAPI = {
 
   // Actualizar configuración
   actualizarConfiguracion: async (data: Record<string, unknown>) => {
-    const response = await fetch(`${API_BASE}/configuracion`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // Incluir cookies
-      body: JSON.stringify(data)
-    });
-    if (!response.ok) {
-      throw new Error('Error al actualizar configuración');
-    }
-    return response.json();
+    const res = await api.put('/configuracion', data);
+    return res.data;
   },
 
   // Subir logo
   subirLogo: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await fetch(`${API_BASE}/configuracion/logo`, {
-      method: 'POST',
-      credentials: 'include', // Incluir cookies
-      body: formData
-    });
-    if (!response.ok) {
-      throw new Error('Error al subir logo');
-    }
-    return response.json();
+
+    const res = await api.post('/configuracion/logo', formData);
+    return res.data;
   },
 
   // Subir favicon
   subirFavicon: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await fetch(`${API_BASE}/configuracion/favicon`, {
-      method: 'POST',
-      credentials: 'include', // Incluir cookies
-      body: formData
-    });
-    if (!response.ok) {
-      throw new Error('Error al subir favicon');
-    }
-    return response.json();
+
+    const res = await api.post('/configuracion/favicon', formData);
+    return res.data;
   },
 
   // Subir banner
   subirBanner: async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await fetch(`${API_BASE}/configuracion/banner`, {
-      method: 'POST',
-      credentials: 'include', // Incluir cookies
-      body: formData
-    });
-    if (!response.ok) {
-      throw new Error('Error al subir banner');
-    }
-    return response.json();
+
+    const res = await api.post('/configuracion/banner', formData);
+    return res.data;
   },
 
   // Restablecer configuración
   restablecerConfiguracion: async () => {
-    const response = await fetch(`${API_BASE}/configuracion/restablecer`, {
-      method: 'POST',
-      credentials: 'include' // Incluir cookies
-    });
-    if (!response.ok) {
-      throw new Error('Error al restablecer configuración');
-    }
-    return response.json();
+    const res = await api.post('/configuracion/restablecer');
+    return res.data;
   },
 
   // Obtener todas las configuraciones
   obtenerTodasConfiguraciones: async () => {
-    const response = await fetch(`${API_BASE}/configuracion/todas`);
-    if (!response.ok) {
-      throw new Error('Error al obtener todas las configuraciones');
-    }
-    return response.json();
+    const res = await api.get('/configuracion/todas');
+    return res.data;
   }
 };

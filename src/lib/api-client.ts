@@ -101,6 +101,32 @@ export async function getPedidos() {
   }
 }
 
+/**
+ * Crear pedido de consumidor final
+ */
+export async function crearPedidoConsumidor(pedidoData: any) {
+  try {
+    const res = await api.post("/usuarios/pedido-consumidor", pedidoData);
+    return res.data;
+  } catch (err) {
+    console.error("Error al crear pedido de consumidor:", err);
+    throw err;
+  }
+}
+
+/**
+ * Confirmar recepción de pedido
+ */
+export async function confirmarRecepcionPedido(pedidoId: string) {
+  try {
+    const res = await api.post(`/productos/pedidos/${pedidoId}/confirmar-recepcion`);
+    return res.data;
+  } catch (err) {
+    console.error("Error al confirmar recepción de pedido:", err);
+    throw err;
+  }
+}
+
 // ----- CATEGORÍAS -----
 
 /**
@@ -116,6 +142,22 @@ export async function getCategorias() {
   }
 }
 
+/**
+ * Crear una nueva categoría
+ */
+export async function crearCategoria(data: {
+  nombre: string;
+  descripcion?: string;
+}) {
+  try {
+    const res = await api.post("/categorias", data);
+    return res.data;
+  } catch (err) {
+    console.error("Error al crear categoría:", err);
+    throw err;
+  }
+}
+
 // ----- PRECIOS -----
 
 /**
@@ -127,6 +169,129 @@ export async function generarPreciosConsumidorFinal() {
     return res.data;
   } catch (err) {
     console.error("Error al generar precios:", err);
+    throw err;
+  }
+}
+
+// ----- AUTENTICACIÓN -----
+
+/**
+ * Solicitar código de activación
+ */
+export async function solicitarCodigo(data: {
+  email: string;
+  nombreTienda: string;
+  tipoNegocio: string;
+  descripcion: string;
+}) {
+  try {
+    const res = await api.post("/auth/solicitar-codigo", data);
+    return res.data;
+  } catch (err) {
+    console.error("Error al solicitar código:", err);
+    throw err;
+  }
+}
+
+/**
+ * Validar código de activación
+ */
+export async function validarCodigo(codigo: string) {
+  try {
+    const res = await api.post("/auth/validar-codigo", { codigo });
+    return res.data;
+  } catch (err) {
+    console.error("Error al validar código:", err);
+    throw err;
+  }
+}
+
+/**
+ * Registrar con código de activación
+ */
+export async function registrarConCodigo(data: {
+  codigo: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  telefono: string;
+  direccion?: string;
+  password: string;
+}) {
+  try {
+    const res = await api.post("/auth/register-with-code", data);
+    return res.data;
+  } catch (err) {
+    console.error("Error al registrar con código:", err);
+    throw err;
+  }
+}
+
+// ----- CONTACTO -----
+
+/**
+ * Solicitar información de planes
+ */
+export async function solicitarInfoPlanes(data: {
+  nombre: string;
+  email: string;
+  telefono: string;
+  mensaje: string;
+  planSeleccionado: string;
+}) {
+  try {
+    const res = await api.post("/contacto/solicitar-info", data);
+    return res.data;
+  } catch (err) {
+    console.error("Error al solicitar información:", err);
+    throw err;
+  }
+}
+
+/**
+ * Enviar contacto comercial
+ */
+export async function enviarContactoComercial(data: {
+  nombre: string;
+  email: string;
+  telefono: string;
+  tipoNegocio: string;
+  descripcion: string;
+  presupuesto: string;
+}) {
+  try {
+    const res = await api.post("/contacto-comercial", data);
+    return res.data;
+  } catch (err) {
+    console.error("Error al enviar contacto comercial:", err);
+    throw err;
+  }
+}
+
+/**
+ * Obtener estadísticas de seguridad
+ */
+export async function getSecurityStats() {
+  try {
+    const res = await api.get("/auth/security-stats");
+    return res.data;
+  } catch (err) {
+    console.error("Error al obtener estadísticas de seguridad:", err);
+    throw err;
+  }
+}
+
+// ----- VENTAS MANUALES -----
+
+/**
+ * Crear una venta manual (admin)
+ */
+export async function crearVentaManual(ventaData: any) {
+  try {
+    const res = await api.post("/ventas-manuales", ventaData);
+    return res.data;
+  } catch (err) {
+    console.error("Error al crear venta manual:", err);
     throw err;
   }
 }
