@@ -37,33 +37,23 @@ export default function AdminListasPrecios() {
 
   const handleSave = async (formData: FormData) => {
     try {
+      const { default: api } = await import('@/lib/api');
       const isEdit = !!editData;
-      const url = isEdit ? `${API_URL}/productos/${editData!.id}` : `${API_URL}/productos`;
-      const method = isEdit ? 'PUT' : 'POST';
       
       console.log('Enviando datos:', Object.fromEntries(formData.entries()));
       
-      const res = await fetch(url, { method, body: formData });
-      
-      // Obtener el texto de respuesta para debugging
-      const responseText = await res.text();
-      console.log('Respuesta del servidor:', responseText);
-      
-      if (!res.ok) {
-        console.error('Error HTTP:', res.status, res.statusText);
-        throw new Error(`Error ${res.status}: ${responseText}`);
+      let response;
+      if (isEdit) {
+        response = await api.put(`/productos/${editData!.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        response = await api.post('/productos', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
       }
-
-      // Intentar parsear como JSON
-      let actualizado;
-      try {
-        actualizado = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Error al parsear JSON:', parseError);
-        throw new Error('Respuesta del servidor no es JSON válido');
-      }
-
-      const nuevoProducto = Array.isArray(actualizado) ? actualizado[0] : actualizado.data?.[0] || actualizado;
+      
+      const nuevoProducto = Array.isArray(response.data) ? response.data[0] : response.data.data?.[0] || response.data;
       
       console.log('Producto procesado:', nuevoProducto);
 
@@ -76,7 +66,7 @@ export default function AdminListasPrecios() {
       }
     } catch (err: any) {
       console.error('Error completo:', err);
-      alert(`Error al guardar: ${err.message}`);
+      alert(`Error al guardar: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -84,12 +74,12 @@ export default function AdminListasPrecios() {
     if (!deleteId) return;
     setDeleteLoading(true);
     try {
-      const res = await fetch(`${API_URL}/productos/${deleteId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Error al eliminar el producto');
+      const { default: api } = await import('@/lib/api');
+      await api.delete(`/productos/${deleteId}`);
       setProductos(prev => prev.filter(p => p.id !== deleteId));
       setDeleteId(null);
     } catch (err: any) {
-      alert(err.message || 'Error desconocido');
+      alert(err.response?.data?.message || err.message || 'Error desconocido');
     } finally {
       setDeleteLoading(false);
     }
@@ -147,7 +137,7 @@ export default function AdminListasPrecios() {
                     <td className="px-4 py-2">
                       {prod.imagen_principal ? (
                         <img
-                          src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `${API_URL}${prod.imagen_principal}`}
+                          src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `https://mi-tienda-backend-o9i7.onrender.com${prod.imagen_principal}`}
                           alt={prod.nombre}
                           className="w-16 h-16 object-cover rounded border"
                           onError={(e) => e.currentTarget.style.display = 'none'}
@@ -185,7 +175,7 @@ export default function AdminListasPrecios() {
                   <div className="flex-shrink-0">
                     {prod.imagen_principal ? (
                       <img
-                        src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `${API_URL}${prod.imagen_principal}`}
+                        src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `https://mi-tienda-backend-o9i7.onrender.com${prod.imagen_principal}`}
                         alt={prod.nombre}
                         className="w-16 h-16 object-cover rounded border"
                         onError={(e) => e.currentTarget.style.display = 'none'}

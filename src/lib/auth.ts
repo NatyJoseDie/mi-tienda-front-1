@@ -105,12 +105,21 @@ export function logout() {
 export const authFetch = async (url: string, options: RequestInit = {}) => {
   try {
     // Usar el cliente API centralizado que ya maneja la autenticación
-    const response = await api.request({
+    const axiosConfig: any = {
       url,
-      method: options.method || 'GET',
-      data: options.body ? JSON.parse(options.body as string) : undefined,
-      ...options
-    });
+      method: (options.method || 'GET') as any,
+    };
+    
+    // Agregar datos si hay body
+    if (options.body) {
+      try {
+        axiosConfig.data = JSON.parse(options.body as string);
+      } catch {
+        axiosConfig.data = options.body;
+      }
+    }
+    
+    const response = await api.request(axiosConfig);
     
     // Simular la respuesta de fetch para compatibilidad
     return {
