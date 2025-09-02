@@ -8,11 +8,16 @@ import api from "./api";
  */
 export async function getProductos() {
   try {
-    const res = await api.get("/catalogo/visual");
-    return res.data;
+    // Consumimos el proxy interno para evitar CORS en el navegador
+    const res = await fetch('/api/catalogo/visual', { cache: 'no-store' });
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    return data;
   } catch (err) {
-    console.error("Error al obtener productos:", err);
-    return [];
+    console.error("Error al obtener productos (proxy):", err);
+    throw err;
   }
 }
 
