@@ -14,7 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Pedido } from '@/services/pedidos';
 import { usePedidos } from '@/hooks/usePedidos';
-import { useAuth } from '@/hooks/useAuth';
+import { getSession } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -30,7 +30,8 @@ const estadoConfig = {
 
 export default function AdminPedidos() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const {
     pedidos,
     loading,
@@ -54,6 +55,16 @@ export default function AdminPedidos() {
   const [entregaManualMap, setEntregaManualMap] = useState<Record<string, boolean>>({});
 
   // Verificar autenticación
+  useEffect(() => {
+    const session = getSession();
+    if (session.token) {
+      setIsAuthenticated(true);
+    } else {
+      router.push('/login');
+    }
+    setAuthLoading(false);
+  }, [router]);
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');

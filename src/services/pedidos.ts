@@ -26,7 +26,7 @@ export interface Pedido {
   productos?: any[];
 }
 
-import { authService } from './auth';
+
 
 export class PedidosService {
   private getAuthHeaders() {

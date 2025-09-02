@@ -2,14 +2,23 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
-import { RevendedorRegisterDto } from '../../services/auth';
 import SecurityHandler, { useSecurityHandler } from '../../components/SecurityHandler';
+
+interface RevendedorRegisterDto {
+  nombre_negocio: string;
+  nombre: string;
+  apellido: string;
+  condicion_fiscal: 'monotributista' | 'responsable_inscripto' | 'exento';
+  email: string;
+  telefono: string;
+  password: string;
+}
 
 export default function RegistroRevendedorPage() {
   const router = useRouter();
-  const { registerRevendedor, isLoading, error, clearError } = useAuth();
   const { securityError, handleSecurityError, clearSecurityError, parseApiError } = useSecurityHandler();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState<RevendedorRegisterDto>({
     nombre_negocio: '',
@@ -94,7 +103,25 @@ export default function RegistroRevendedorPage() {
       setValidationErrors(prev => ({ ...prev, [name]: '' }));
     }
     
-    clearError();
+    setError(null);
+  };
+
+  const registerRevendedor = async (data: RevendedorRegisterDto) => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const response = await fetch(`${API_URL}/auth/register-revendedor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error en el registro');
+    }
+
+    return response.json();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,6 +132,8 @@ export default function RegistroRevendedorPage() {
     }
     
     clearSecurityError();
+    setIsLoading(true);
+    setError(null);
     
     try {
       await registerRevendedor(formData);
@@ -114,9 +143,11 @@ export default function RegistroRevendedorPage() {
       if (apiError) {
         handleSecurityError(apiError);
       } else {
-        // El error ya se maneja en el hook useAuth
+        setError(err instanceof Error ? err.message : 'Error en el registro');
         console.error('Error en registro:', err);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 

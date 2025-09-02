@@ -1,7 +1,36 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { authService, type SecurityStats } from '@/services/auth';
+interface SecurityStats {
+  totalAttempts: number;
+  failedAttempts: number;
+  blockedIPs: number;
+  suspiciousActivity: number;
+  lastHourAttempts: number;
+  successRate: number;
+  intentosFallidos24h: number;
+  ipsBloquedas: number;
+  intentosPorHora: Array<{
+    intentos: number;
+  }>;
+  topFailedIPs: Array<{
+    ip: string;
+    attempts: number;
+    lastAttempt: string;
+  }>;
+  topIpsSospechosas: Array<{
+    ip: string;
+    intentos: number;
+    ultimoIntento: string;
+  }>;
+  recentActivity: Array<{
+    timestamp: string;
+    ip: string;
+    userAgent: string;
+    success: boolean;
+    reason?: string;
+  }>;
+}
 import {
   Shield,
   AlertTriangle,
@@ -39,7 +68,21 @@ const SecurityStats: React.FC<SecurityStatsProps> = ({
   const fetchStats = async () => {
     try {
       setError('');
-      const stats = await authService.getSecurityStats();
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/auth/security-stats`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al obtener estadísticas');
+      }
+
+      const stats = await response.json();
       setData(stats);
       setLastRefresh(new Date());
     } catch (err: any) {

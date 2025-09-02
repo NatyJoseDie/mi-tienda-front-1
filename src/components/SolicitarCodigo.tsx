@@ -1,7 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
-import { authService, SolicitarCodigoDto } from '@/services/auth';
+interface SolicitarCodigoDto {
+  email: string;
+  nombreTienda: string;
+  telefono: string;
+  descripcionNegocio: string;
+}
 import { Mail, Store, Send, CheckCircle, AlertCircle, Phone, FileText } from 'lucide-react';
 import SecurityHandler, { useSecurityHandler } from './SecurityHandler';
 
@@ -94,7 +99,21 @@ const SolicitarCodigo: React.FC<SolicitarCodigoProps> = ({
     clearSecurityError();
 
     try {
-      const response = await authService.solicitarCodigo(formData);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/auth/solicitar-codigo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al solicitar código');
+      }
+
+      const responseData = await response.json();
       
       setSuccess(true);
       
@@ -105,7 +124,7 @@ const SolicitarCodigo: React.FC<SolicitarCodigoProps> = ({
           nombreTienda: formData.nombreTienda,
           telefono: formData.telefono,
           descripcionNegocio: formData.descripcionNegocio,
-          codigo: response.codigo, // Solo en modo desarrollo
+          codigo: responseData.codigo, // Solo en modo desarrollo
         });
       }
       

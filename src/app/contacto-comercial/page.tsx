@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { authService } from '@/services/auth';
 import { Mail, User, Phone, Building, FileText, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import SecurityHandler, { useSecurityHandler } from '@/components/SecurityHandler';
 
@@ -107,14 +106,26 @@ const ContactoComercial: React.FC = () => {
     clearSecurityError();
 
     try {
-      await authService.enviarContactoComercial({
-        nombre: formData.nombre,
-        email: formData.email,
-        telefono: formData.telefono,
-        tipoNegocio: formData.tipoNegocio,
-        descripcion: formData.descripcion,
-        presupuesto: formData.presupuesto,
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/contacto-comercial`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          email: formData.email,
+          telefono: formData.telefono,
+          tipoNegocio: formData.tipoNegocio,
+          descripcion: formData.descripcion,
+          presupuesto: formData.presupuesto,
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al enviar el mensaje');
+      }
 
       setSuccess(true);
     } catch (err: any) {

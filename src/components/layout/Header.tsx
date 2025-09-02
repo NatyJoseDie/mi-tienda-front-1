@@ -2,24 +2,28 @@
 
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { useAuth } from '@/hooks/useAuth';
+import { getSession, logout, UserSession } from '@/lib/auth';
 import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
 const Header = () => {
   const { cartItems } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [session, setSession] = useState<UserSession>({ token: null, role: null });
 
   useEffect(() => {
     setIsClient(true);
+    // Obtener sesión actual
+    const currentSession = getSession();
+    setSession(currentSession);
   }, []);
 
   const totalItems = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const handleLogout = () => {
     logout();
+    setSession({ token: null, role: null });
   };
 
   return (
@@ -43,17 +47,17 @@ const Header = () => {
             <Link href="/contacto" className="text-gray-600 hover:text-blue-700 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200">Contacto</Link>
             
             {/* Mostrar información del usuario si está autenticado */}
-            {isClient && isAuthenticated && user ? (
+            {isClient && session.token ? (
               <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-gray-200">
                 <div className="flex items-center space-x-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
                   <FiUser className="h-4 w-4 text-blue-600" />
                   <div className="flex flex-col">
-                    <span className="font-medium text-sm">{user.nombre} {user.apellido}</span>
-                    <span className="text-xs text-gray-500">{user.tipo}</span>
+                    <span className="font-medium text-sm">Usuario</span>
+                    <span className="text-xs text-gray-500">{session.role}</span>
                   </div>
                 </div>
                 <Link 
-                  href={user.tipo === 'admin' ? '/admin' : '/admin/revendedores'} 
+                  href={session.role === 'admin' ? '/admin' : '/admin/revendedores'} 
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm shadow-sm"
                 >
                   Panel
@@ -145,14 +149,14 @@ const Header = () => {
             
             {/* Sección de autenticación en móvil */}
             <div className="border-t border-gray-200 pt-4 mt-4">
-              {isClient && isAuthenticated && user ? (
+              {isClient && session.token ? (
                 <div className="space-y-2">
                   <div className="px-4 py-3 text-sm text-gray-700 bg-blue-50 rounded-lg font-medium">
-                    <div className="font-medium">{user.nombre} {user.apellido}</div>
-                    <div className="text-gray-500">({user.tipo})</div>
+                    <div className="font-medium">Usuario</div>
+                    <div className="text-gray-500">({session.role})</div>
                   </div>
                   <Link 
-                    href={user.tipo === 'admin' ? '/admin' : '/admin/revendedores'} 
+                    href={session.role === 'admin' ? '/admin' : '/admin/revendedores'} 
                     className="block px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-center shadow-sm"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

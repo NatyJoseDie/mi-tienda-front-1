@@ -1,7 +1,30 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { authService, SolicitarCodigoDto, RegistroConCodigoDto, CodigoValidationResponse } from '../services/auth';
+
+interface SolicitarCodigoDto {
+  email: string;
+  nombreTienda: string;
+  tipoNegocio: string;
+  descripcion: string;
+}
+
+interface RegistroConCodigoDto {
+  codigo: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  telefono: string;
+  direccion?: string;
+  password: string;
+}
+
+interface CodigoValidationResponse {
+  valid: boolean;
+  email?: string;
+  nombreTienda?: string;
+  message?: string;
+}
 
 interface UseCodeActivationReturn {
   // Estados
@@ -55,13 +78,27 @@ export const useCodeActivation = (): UseCodeActivationReturn => {
       setIsRequesting(true);
       setError(null);
       
-      const response = await authService.solicitarCodigo(data);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/auth/solicitar-codigo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al solicitar código');
+      }
+
+      const responseData = await response.json();
       
       // Preparar resultado
       const result = {
         email: data.email,
         nombreTienda: data.nombreTienda,
-        ...(process.env.NEXT_PUBLIC_DEV_MODE === 'true' && response.codigo ? { codigo: response.codigo } : {}),
+        ...(process.env.NEXT_PUBLIC_DEV_MODE === 'true' && responseData.codigo ? { codigo: responseData.codigo } : {}),
       };
       
       setRequestResult(result);
@@ -86,10 +123,24 @@ export const useCodeActivation = (): UseCodeActivationReturn => {
         return false;
       }
       
-      const response = await authService.validarCodigo(codigo);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/auth/validar-codigo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ codigo }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al validar código');
+      }
+
+      const responseData = await response.json();
       
-      if (response.valido) {
-        setValidationResult(response);
+      if (responseData.valido) {
+        setValidationResult(responseData);
         return true;
       } else {
         setError('Código de activación inválido');
@@ -135,7 +186,19 @@ export const useCodeActivation = (): UseCodeActivationReturn => {
         return false;
       }
       
-      await authService.registrarConCodigo(data);
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/auth/register-with-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error en el registro');
+      }
       
       // El registro fue exitoso
       return true;

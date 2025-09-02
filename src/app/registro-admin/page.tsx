@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { authService } from '@/services/auth';
 import { Mail, Lock, User, Building, Phone, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import SecurityHandler, { useSecurityHandler } from '@/components/SecurityHandler';
@@ -131,15 +130,27 @@ const RegistroAdmin: React.FC = () => {
     clearSecurityError();
 
     try {
-      const response = await authService.registrarConCodigo({
-        codigo: formData.codigo,
-        email: formData.email,
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        telefono: formData.telefono,
-        direccion: formData.direccion || undefined,
-        password: formData.password,
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const response = await fetch(`${API_URL}/auth/register-with-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          codigo: formData.codigo,
+          email: formData.email,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          telefono: formData.telefono,
+          direccion: formData.direccion || undefined,
+          password: formData.password,
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error en el registro');
+      }
 
       setSuccess(true);
       

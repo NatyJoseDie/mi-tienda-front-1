@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
-import { LoginDto } from '../../services/auth';
+import { login, getSession } from '@/lib/auth';
 import SecurityHandler, { useSecurityHandler } from '../../components/SecurityHandler';
+
+interface LoginDto {
+  email: string;
+  password: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, error, clearError, isAuthenticated, user } = useAuth();
   const { securityError, handleSecurityError, clearSecurityError, parseApiError } = useSecurityHandler();
   
   const [formData, setFormData] = useState<LoginDto>({
@@ -17,14 +20,12 @@ export default function LoginPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Redireccionar si ya está autenticado
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const redirectPath = user.tipo === 'admin' ? '/admin' : '/admin/revendedores';
-      router.push(redirectPath);
-    }
-  }, [isAuthenticated, user, router]);
+  const clearError = () => {
+    setError(null);
+  };
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -65,18 +66,37 @@ export default function LoginPage() {
       return;
     }
     
+    setIsLoading(true);
+    setError(null);
+    
     try {
       clearSecurityError();
-      await login(formData);
-      // La redirección se maneja en el useEffect
+      const result = await login(formData.email, formData.password);
+      
+      // Redirigir según el rol del usuario
+      let redirectPath = '/admin'; // Por defecto todos van al panel administrativo
+      
+      if (result.role === 'admin') {
+        redirectPath = '/admin';
+      } else if (result.role === 'revendedor') {
+        redirectPath = '/admin/revendedores';
+      } else {
+        // Para cualquier usuario autenticado, ir al panel administrativo
+        redirectPath = '/admin';
+      }
+      
+      router.push(redirectPath);
     } catch (err: any) {
       // Verificar si es un error de seguridad
       const secError = parseApiError(err);
       if (secError) {
         handleSecurityError(secError);
+      } else {
+        setError(err.message || 'Error al iniciar sesión');
       }
-      // El error ya se maneja en el hook useAuth
       console.error('Error en login:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 

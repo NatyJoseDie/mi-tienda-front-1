@@ -8,7 +8,7 @@ export interface ActualizarProductoData {
 }
 
 export async function actualizarProductoCatalogo(id: string, datos: ActualizarProductoData) {
-  const response = await fetch(`${API_BASE_URL}/catalogo/producto/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/productos/${id}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json'
@@ -26,7 +26,12 @@ export async function actualizarProductoCatalogo(id: string, datos: ActualizarPr
 }
 
 export async function obtenerProductoPorId(id: string) {
-  const response = await fetch(`${API_BASE_URL}/catalogo/producto/${id}`);
+  const response = await fetch(`${API_BASE_URL}/productos/${id}`, {
+    credentials: 'include', // Incluir cookies
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
   
   if (!response.ok) {
     throw new Error('No se pudo obtener el producto');

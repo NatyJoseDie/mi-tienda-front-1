@@ -12,8 +12,9 @@ async function getProductById(id: string): Promise<Producto | null> {
   console.log('[FETCH] Buscando producto con id:', id);
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   try {
+    // Usar el endpoint público específico para producto individual
     const res = await fetch(`${API_BASE_URL}/catalogo/producto/${id}`, {
-      cache: 'no-store',
+      cache: 'no-store'
     });
     console.log('[FETCH] Status:', res.status);
     if (!res.ok) {
@@ -21,7 +22,8 @@ async function getProductById(id: string): Promise<Producto | null> {
         console.log('[FETCH] Producto no encontrado (404)');
         return null;
       }
-      throw new Error('Error al obtener los datos del producto desde el catálogo');
+      console.log('[FETCH] Error status:', res.status, 'StatusText:', res.statusText);
+      throw new Error(`Error al obtener los datos del producto: ${res.status} ${res.statusText}`);
     }
     const productData = await res.json();
     console.log('[FETCH] Respuesta del backend:', productData);
