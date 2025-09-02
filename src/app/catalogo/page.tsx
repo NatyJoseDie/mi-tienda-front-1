@@ -375,12 +375,9 @@ export default function CatalogoPage() {
       setLoading(true);
       setError(null);
       try {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
-        const res = await fetch(`${API_BASE_URL}/catalogo/visual`, { cache: 'no-store' });
-        if (!res.ok) {
-          throw new Error(`Error al cargar productos: ${res.statusText}`);
-        }
-        const data = await res.json();
+        // Usar el cliente API centralizado
+        const { getProductos } = await import('@/lib/api-client');
+        const data = await getProductos();
         let rawProducts = Array.isArray(data) ? data : (data && Array.isArray(data.data)) ? data.data : [];
 
         const validProducts = rawProducts.filter(

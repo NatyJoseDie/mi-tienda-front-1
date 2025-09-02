@@ -5,7 +5,7 @@ import { Producto } from '@/types/producto';
 import EditarProductoModal from '@/components/EditarProductoModal';
 
 const STOCK_CRITICO = 5;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
+// API_URL ya no es necesario - usando cliente API centralizado
 
 interface Categoria {
   id: string;
@@ -108,16 +108,10 @@ export default function AdminProductos() {
     setLoadingCategorias(true);
     try {
       console.log('🔄 Iniciando carga de categorías...');
-      const res = await fetch(`${API_URL}/categorias`, {
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Incluir cookies para autenticación
-      });
-      console.log('📡 Respuesta recibida:', res.status, res.ok);
-      if (!res.ok) throw new Error('Error al cargar las categorías');
-      const data = await res.json();
-      console.log('📦 Datos recibidos:', data);
-      const categoriasArray = Array.isArray(data) ? data : data.data || [];
+      const { default: api } = await import('@/lib/api');
+      const response = await api.get('/categorias');
+      console.log('📦 Datos recibidos:', response.data);
+      const categoriasArray = Array.isArray(response.data) ? response.data : response.data.data || [];
       console.log('✅ Categorías procesadas:', categoriasArray);
       setCategorias(categoriasArray.filter((cat: Categoria) => cat.activo));
     } catch (err: any) {
@@ -132,16 +126,10 @@ export default function AdminProductos() {
     setLoading(true);
     setError(null);
     try {
-      const endpoint = showInactive
-        ? `${API_URL}/productos/inactivos`
-        : `${API_URL}/productos/publico`;
-      const res = await fetch(endpoint, {
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) throw new Error('Error al cargar los productos');
-      const data = await res.json();
-      const productosArray = Array.isArray(data) ? data : data.data || [];
+      const { default: api } = await import('@/lib/api');
+      const endpoint = showInactive ? '/productos/inactivos' : '/productos/publico';
+      const response = await api.get(endpoint);
+      const productosArray = Array.isArray(response.data) ? response.data : response.data.data || [];
       const productosOrdenados = productosArray.sort((a: Producto, b: Producto) => a.nombre.localeCompare(b.nombre));
       setProductos(productosOrdenados);
     } catch (err: any) {
@@ -234,12 +222,8 @@ export default function AdminProductos() {
   const handleUpdatePorcentaje = async (id: string, nuevoPorcentaje: number) => {
     setIsUpdatingPorcentaje(true);
     try {
-      const res = await fetch(`${API_URL}/productos/${id}/porcentaje-ganancia`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ porcentaje: nuevoPorcentaje }),
-      });
-      if (!res.ok) throw new Error('Error al actualizar el porcentaje');
+      const { default: api } = await import('@/lib/api');
+      await api.patch(`/productos/${id}/porcentaje-ganancia`, { porcentaje: nuevoPorcentaje });
       await fetchProductos();
       setTimeout(() => {
         setPorcentajesTemp((prev) => {
@@ -274,21 +258,12 @@ export default function AdminProductos() {
 
   const handleGenerarPreciosConsumidorFinal = async () => {
     try {
-      const response = await fetch(`${API_URL}/precios/generar-consumidor-final`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        alert(data.mensaje + '\nProductos actualizados: ' + data.productos_actualizados);
-        await fetchProductos();
-      } else {
-        alert('Error: ' + (data.message || 'Error desconocido'));
-      }
-    } catch (error) {
-      alert('Error en la petición');
+      const { default: api } = await import('@/lib/api');
+      const response = await api.post('/precios/generar-consumidor-final');
+      alert(response.data.mensaje + '\nProductos actualizados: ' + response.data.productos_actualizados);
+      await fetchProductos();
+    } catch (error: any) {
+      alert('Error: ' + (error.response?.data?.message || error.message || 'Error desconocido'));
     }
   };
 

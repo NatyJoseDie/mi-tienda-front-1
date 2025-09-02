@@ -7,31 +7,18 @@ import ProductDetailClient from '@/components/products/ProductDetailClient';
 import type { Producto } from '@/types/producto';
 import Link from "next/link";
 
-// Función para obtener el producto por ID con logs detallados
+// Función para obtener el producto por ID usando el cliente API centralizado
 async function getProductById(id: string): Promise<Producto | null> {
   console.log('[FETCH] Buscando producto con id:', id);
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
   try {
-    // Usar el endpoint público específico para producto individual
-    const res = await fetch(`${API_BASE_URL}/catalogo/producto/${id}`, {
-      cache: 'no-store'
-    });
-    console.log('[FETCH] Status:', res.status);
-    if (!res.ok) {
-      if (res.status === 404) {
-        console.log('[FETCH] Producto no encontrado (404)');
-        return null;
-      }
-      console.log('[FETCH] Error status:', res.status, 'StatusText:', res.statusText);
-      throw new Error(`Error al obtener los datos del producto: ${res.status} ${res.statusText}`);
-    }
-    const productData = await res.json();
+    // Usar el cliente API centralizado
+    const { getProductoPorId } = await import('@/lib/api-client');
+    const productData = await getProductoPorId(id);
     console.log('[FETCH] Respuesta del backend:', productData);
-    // El backend devuelve un objeto, no un array
     return productData || null;
   } catch (error) {
     console.error('[FETCH] Error al hacer fetch del producto:', error);
-    throw error;
+    return null; // Retornar null en caso de error para mostrar 404
   }
 }
 

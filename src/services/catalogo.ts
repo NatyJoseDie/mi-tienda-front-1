@@ -1,6 +1,5 @@
 // src/services/catalogo.ts
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
+import api from '@/lib/api';
 
 export interface ActualizarProductoData {
   nombre?: string;
@@ -8,34 +7,19 @@ export interface ActualizarProductoData {
 }
 
 export async function actualizarProductoCatalogo(id: string, datos: ActualizarProductoData) {
-  const response = await fetch(`${API_BASE_URL}/productos/${id}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include', // Incluir cookies
-    body: JSON.stringify(datos)
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'No se pudo actualizar el producto');
+  try {
+    const response = await api.patch(`/productos/${id}`, datos);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'No se pudo actualizar el producto');
   }
-  
-  return response.json();
 }
 
 export async function obtenerProductoPorId(id: string) {
-  const response = await fetch(`${API_BASE_URL}/productos/${id}`, {
-    credentials: 'include', // Incluir cookies
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  
-  if (!response.ok) {
-    throw new Error('No se pudo obtener el producto');
+  try {
+    const response = await api.get(`/productos/${id}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'No se pudo obtener el producto');
   }
-  
-  return response.json();
 }

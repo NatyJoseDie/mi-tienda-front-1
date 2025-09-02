@@ -7,7 +7,7 @@ import Modal from '@/components/products/Modal';
 import AjustePrecioCosto from '../productos/AjustePrecioCosto';
 
 const STOCK_CRITICO = 5;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
+// API_URL ya no es necesario - usando cliente API centralizado
 
 export default function AdminListasPrecios() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -23,13 +23,9 @@ export default function AdminListasPrecios() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/productos`, {
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!res.ok) throw new Error('Error al cargar los productos');
-      const data = await res.json();
-      setProductos(Array.isArray(data) ? data : data.data || []);
+      const { default: api } = await import('@/lib/api');
+      const response = await api.get('/productos');
+      setProductos(response.data);
     } catch (err: any) {
       setError(err.message || 'Error desconocido');
     } finally {

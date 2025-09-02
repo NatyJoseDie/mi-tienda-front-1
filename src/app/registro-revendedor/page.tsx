@@ -107,21 +107,11 @@ export default function RegistroRevendedorPage() {
   };
 
   const registerRevendedor = async (data: RevendedorRegisterDto) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
-    const response = await fetch(`${API_URL}/auth/register-revendedor`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+    const { register } = await import('@/lib/auth');
+    return await register({
+      ...data,
+      rol: 'revendedor'
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Error en el registro');
-    }
-
-    return response.json();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
