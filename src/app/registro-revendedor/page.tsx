@@ -107,7 +107,7 @@ export default function RegistroRevendedorPage() {
   };
 
   const registerRevendedor = async (data: RevendedorRegisterDto) => {
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
     const response = await fetch(`${API_URL}/auth/register-revendedor`, {
       method: 'POST',
       headers: {

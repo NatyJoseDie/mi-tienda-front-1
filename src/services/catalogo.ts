@@ -1,6 +1,6 @@
 // src/services/catalogo.ts
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
 
 export interface ActualizarProductoData {
   nombre?: string;

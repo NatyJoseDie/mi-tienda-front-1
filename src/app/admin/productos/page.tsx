@@ -5,7 +5,7 @@ import { Producto } from '@/types/producto';
 import EditarProductoModal from '@/components/EditarProductoModal';
 
 const STOCK_CRITICO = 5;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
 
 interface Categoria {
   id: string;

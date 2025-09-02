@@ -7,7 +7,7 @@ import Modal from '@/components/products/Modal';
 import AjustePrecioCosto from '../productos/AjustePrecioCosto';
 
 const STOCK_CRITICO = 5;
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mi-tienda-backend-o9i7.onrender.com';
 
 export default function AdminListasPrecios() {
   const [productos, setProductos] = useState<Producto[]>([]);
