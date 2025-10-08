@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
-import { getSession, logout, UserSession } from '@/lib/auth';
+import { getSession as getStoredSession, logout, UserSession } from '@/lib/auth';
 import { FiShoppingCart, FiUser, FiLogOut, FiMenu, FiX } from 'react-icons/fi';
 import { useState, useEffect } from 'react';
 
@@ -10,21 +10,32 @@ const Header = () => {
   const { cartItems } = useCart();
   const [isClient, setIsClient] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [session, setSession] = useState<UserSession>({ token: null, role: null });
+  const [session, setSessionState] = useState<UserSession>({ token: null, role: null });
 
   useEffect(() => {
     setIsClient(true);
     // Obtener sesión actual
-    const currentSession = getSession();
-    setSession(currentSession);
+    const currentSession = getStoredSession();
+    setSessionState(currentSession);
   }, []);
 
   const totalItems = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const handleLogout = () => {
     logout();
-    setSession({ token: null, role: null });
+    setSessionState({ token: null, role: null });
   };
+
+  // Si el rol es explícitamente 'revendedor', dirigir a su portal; en cualquier otro caso, ir al panel admin
+  const isRevendedor = session.role?.toLowerCase() === 'revendedor';
+  const panelHref = isRevendedor ? '/admin/revendedores' : '/admin';
+
+  // Mapeo de estilos del badge según rol
+  const roleClass = session.role === 'admin'
+    ? 'bg-blue-100 text-blue-700 border-blue-200'
+    : session.role === 'revendedor'
+      ? 'bg-amber-100 text-amber-700 border-amber-200'
+      : 'bg-gray-100 text-gray-700 border-gray-200';
 
   return (
     <header className="bg-white shadow-lg border-b border-gray-100 sticky top-0 z-50">
@@ -51,13 +62,21 @@ const Header = () => {
               <div className="flex items-center space-x-3 ml-6 pl-6 border-l border-gray-200">
                 <div className="flex items-center space-x-2 text-gray-700 bg-gray-50 px-3 py-2 rounded-lg">
                   <FiUser className="h-4 w-4 text-blue-600" />
-                  <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
                     <span className="font-medium text-sm">Usuario</span>
-                    <span className="text-xs text-gray-500">{session.role}</span>
+                    {/* Etiqueta clara del rol */}
+                    {session.role && (
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${roleClass}`}
+                        title={`Accede al panel de ${session.role === 'revendedor' ? 'revendedores' : 'administración'}`}
+                      >
+                        {session.role}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Link 
-                  href={session.role === 'admin' ? '/admin' : '/admin/revendedores'} 
+                  href={panelHref}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm shadow-sm"
                 >
                   Panel
@@ -152,11 +171,20 @@ const Header = () => {
               {isClient && session.token ? (
                 <div className="space-y-2">
                   <div className="px-4 py-3 text-sm text-gray-700 bg-blue-50 rounded-lg font-medium">
-                    <div className="font-medium">Usuario</div>
-                    <div className="text-gray-500">({session.role})</div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Usuario</span>
+                      {session.role && (
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${roleClass}`}
+                          title={`Accede al panel de ${session.role === 'revendedor' ? 'revendedores' : 'administración'}`}
+                        >
+                          {session.role}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <Link 
-                    href={session.role === 'admin' ? '/admin' : '/admin/revendedores'} 
+                    href={panelHref}
                     className="block px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-center shadow-sm"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >

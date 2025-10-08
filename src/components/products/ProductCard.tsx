@@ -9,6 +9,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Producto } from '@/types/producto';
+import { getSafeImage } from '@/utils/imageUtils';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 import { useCart } from '@/context/CartContext';
@@ -33,19 +34,21 @@ const ProductCard = ({ producto }: ProductCardProps) => {
     alert(`${producto.nombre} ha sido agregado al pedido.`);
   };
 
+  const normalizeSupabaseImageUrl = (url: string) => {
+    if (!url) return '';
+    // Eliminar duplicaciones del segmento product-images/
+    let fixed = url.replace(/\/product-images\/(?:product-images\/)+/g, '/product-images/');
+    // Quitar espacios accidentales
+    fixed = fixed.trim();
+    return fixed;
+  };
+
   const getImageUrl = () => {
-    if (imageError || !producto.imagen_principal) {
-      return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&q=80';
+    // Fallback local inmediato si hubo error o no hay imagen
+    if (imageError) {
+      return '/placeholder.jpg';
     }
-    // Si la imagen es de placehold.co, usar una imagen de Unsplash por defecto
-    if (producto.imagen_principal.includes('placehold.co')) {
-      return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop&q=80';
-    }
-    const correctUrl = producto.imagen_principal.replace(
-      '/product-images/product-images/',
-      '/product-images/'
-    );
-    return correctUrl;
+    return getSafeImage(producto.imagen_principal);
   };
 
   return (

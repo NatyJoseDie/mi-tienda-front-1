@@ -8,15 +8,11 @@ import api from "./api";
  */
 export async function getProductos() {
   try {
-    // Consumimos el proxy interno para evitar CORS en el navegador
-    const res = await fetch('/api/catalogo/visual', { cache: 'no-store' });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const data = await res.json();
-    return data;
+    // Llamada directa al backend usando axios configurado
+    const response = await api.get('/catalogo/visual');
+    return response.data;
   } catch (err) {
-    console.error("Error al obtener productos (proxy):", err);
+    console.error("Error al obtener productos:", err);
     throw err;
   }
 }
@@ -26,8 +22,9 @@ export async function getProductos() {
  */
 export async function getProductoPorId(id: string) {
   try {
-    const res = await api.get(`/catalogo/producto/${id}`);
-    return res.data;
+    // Llamada directa al backend usando axios configurado
+    const response = await api.get(`/catalogo/producto/${id}`);
+    return response.data;
   } catch (err) {
     console.error("Error al obtener producto:", err);
     return null;
@@ -52,7 +49,7 @@ export async function crearProducto(productData: any) {
  */
 export async function actualizarProducto(id: string, productData: any) {
   try {
-    const res = await api.patch(`/productos/${id}`, productData);
+    const res = await api.put(`/productos/${id}`, productData);
     return res.data;
   } catch (err) {
     console.error("Error al actualizar producto:", err);

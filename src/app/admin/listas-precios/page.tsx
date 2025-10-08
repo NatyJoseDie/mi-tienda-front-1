@@ -5,6 +5,8 @@ import { Producto } from '@/types/producto';
 import ProductForm from '@/components/products/ProductForm';
 import Modal from '@/components/products/Modal';
 import AjustePrecioCosto from '../productos/AjustePrecioCosto';
+import { getProductos } from '@/lib/api-client';
+import Link from 'next/link';
 
 const STOCK_CRITICO = 5;
 // API_URL ya no es necesario - usando cliente API centralizado
@@ -23,11 +25,13 @@ export default function AdminListasPrecios() {
     setLoading(true);
     setError(null);
     try {
-      const { default: api } = await import('@/lib/api');
-      const response = await api.get('/productos');
-      setProductos(response.data);
+      const data = await getProductos();
+      const productosData = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+      setProductos(productosData);
     } catch (err: any) {
+      console.error('Error en fetchProductos:', err);
       setError(err.message || 'Error desconocido');
+      setProductos([]);
     } finally {
       setLoading(false);
     }
@@ -44,13 +48,67 @@ export default function AdminListasPrecios() {
       
       let response;
       if (isEdit) {
-        response = await api.put(`/productos/${editData!.id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        // En edición: usar PUT con FormData según contrato del backend
+        // Construir FormData sólo con campos permitidos y enviar imágenes si fueron provistas
+        const updateFd = new FormData();
+
+        // Helper: agrega valores simples como string y complejos (arrays/objetos) serializados
+        const appendSmart = (key: string, value: any) => {
+          if (value === undefined || value === null || value === '') return;
+          if (value instanceof File || value instanceof Blob) {
+            updateFd.append(key, value);
+          } else if (Array.isArray(value) || (typeof value === 'object' && value !== null)) {
+            updateFd.append(key, JSON.stringify(value));
+          } else {
+            updateFd.append(key, String(value));
+          }
+        };
+
+        // Helper para agregar solo si cambió
+        const appendIfChanged = (key: string, newValue: FormDataEntryValue | null, originalValue: any) => {
+          if (!newValue || newValue === '') return;
+
+          let parsedNew: string | number = typeof originalValue === 'number' ? Number(newValue) : String(newValue);
+
+          let parsedOriginal = originalValue ?? (typeof parsedNew === 'number' ? 0 : '');
+
+          if (parsedNew !== parsedOriginal) {
+            appendSmart(key, parsedNew);
+          }
+        };
+
+        // Campos básicos permitidos, solo si cambiaron
+        appendIfChanged('nombre', formData.get('nombre'), editData!.nombre);
+        appendIfChanged('descripcion', formData.get('descripcion'), editData!.descripcion);
+        appendIfChanged('precio_costo', formData.get('precio_costo'), editData!.precio_costo);
+        appendIfChanged('stock', formData.get('stock'), editData!.stock);
+        appendIfChanged('categoria', formData.get('categoria'), editData!.categoria);
+        appendIfChanged('unidad_id', formData.get('unidad_id'), editData!.unidad_id);
+        // Importante: No enviar SKU durante la edición para evitar errores de validación
+
+        // Imágenes (opcional), agregar si se proporcionaron
+        const imagenesVals = formData.getAll('imagenes').filter((v) => v instanceof File);
+        if (imagenesVals.length > 0) {
+          imagenesVals.forEach((img) => updateFd.append('imagenes', img as File));
+        }
+
+        // Debug: listar el contenido final del FormData a enviar
+        try {
+          console.log('PUT /productos/' + editData!.id + ' payload (FormData):');
+          for (const [k, v] of updateFd.entries()) {
+            if (v instanceof File) {
+              console.log(`  ${k}: File(name=${v.name}, size=${v.size}, type=${v.type})`);
+            } else {
+              console.log(`  ${k}:`, v);
+            }
+          }
+        } catch (e) { /* noop */ }
+
+        // Actualizar datos del producto
+        response = await api.put(`/productos/${editData!.id}`, updateFd);
       } else {
-        response = await api.post('/productos', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        // En creación: el backend acepta multipart/form-data con todos los campos
+        response = await api.post('/productos', formData);
       }
       
       const nuevoProducto = Array.isArray(response.data) ? response.data[0] : response.data.data?.[0] || response.data;
@@ -60,7 +118,7 @@ export default function AdminListasPrecios() {
       setModalOpen(false);
       setEditData(null);
       if (isEdit) {
-        setProductos(prev => prev.map(p => p.id === nuevoProducto.id ? nuevoProducto : p));
+        setProductos(prev => prev.map(p => p.id === nuevoProducto.id ? { ...p, ...nuevoProducto } : p));
       } else {
         setProductos(prev => [nuevoProducto, ...prev]);
       }
@@ -91,7 +149,12 @@ export default function AdminListasPrecios() {
 
   return (
     <div className="container mx-auto py-8">
-      <h2 className="text-2xl font-bold mb-6">Lista de Precios</h2>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Lista de Precios</h2>
+        <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded-md px-3 py-1.5">
+          ← Volver al menú principal
+        </Link>
+      </div>
 
       <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
         <AjustePrecioCosto onAjusteGuardado={fetchProductos} />
@@ -137,7 +200,7 @@ export default function AdminListasPrecios() {
                     <td className="px-4 py-2">
                       {prod.imagen_principal ? (
                         <img
-                          src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `https://mi-tienda-backend-o9i7.onrender.com${prod.imagen_principal}`}
+                          src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `${process.env.NEXT_PUBLIC_API_URL}${prod.imagen_principal}`}
                           alt={prod.nombre}
                           className="w-16 h-16 object-cover rounded border"
                           onError={(e) => e.currentTarget.style.display = 'none'}
@@ -175,7 +238,7 @@ export default function AdminListasPrecios() {
                   <div className="flex-shrink-0">
                     {prod.imagen_principal ? (
                       <img
-                        src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `https://mi-tienda-backend-o9i7.onrender.com${prod.imagen_principal}`}
+                        src={prod.imagen_principal.startsWith('http') ? prod.imagen_principal : `${process.env.NEXT_PUBLIC_API_URL}${prod.imagen_principal}`}
                         alt={prod.nombre}
                         className="w-16 h-16 object-cover rounded border"
                         onError={(e) => e.currentTarget.style.display = 'none'}

@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import api from '@/lib/api';
+import { resolveImageUrl } from '@/utils/imageUtils';
 
 interface ProductoCatalogo {
   id: string;
@@ -26,11 +27,15 @@ interface ProductoCatalogo {
 }
 
 export default function AdminCatalogoVisual() {
+  // Helper para resolver URLs de imágenes
+  const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  
+  // Estados para productos y UI
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('todas');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductoCatalogo | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -48,7 +53,22 @@ export default function AdminCatalogoVisual() {
     try {
       setLoading(true);
       const response = await api.get('/catalogo/productos');
-      setProductos(response.data);
+      const raw = response.data;
+      const mapped: ProductoCatalogo[] = (Array.isArray(raw) ? raw : []).map((p: any) => {
+        const categoria = typeof p.categoria === 'string' ? p.categoria : (p?.categoria?.nombre || '');
+        return {
+          id: p.id,
+          nombre: p.nombre || p.titulo || '',
+          descripcion: p.descripcion || p.descripcion_corta || '',
+          categoria,
+          imagen_principal: p.imagen_principal ?? p.imagen ?? null,
+          imagenes: Array.isArray(p.imagenes) ? p.imagenes : [],
+          stock: typeof p.stock === 'number' ? p.stock : (p.stock_total ?? 0),
+          precio_final: p.precio_final ?? p.precio ?? null,
+          destacado: Boolean(p.destacado ?? p.is_featured ?? false),
+        } as ProductoCatalogo;
+      });
+      setProductos(mapped);
       setError(null);
     } catch (error) {
       console.error('Error al cargar productos:', error);
@@ -69,27 +89,28 @@ export default function AdminCatalogoVisual() {
       setUploading(true);
       const formData = new FormData();
       formData.append('imagen', file);
-      
+
+      // Asegurar envío del token en esta llamada multipart/form-data
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('authToken')) : null;
       const response = await api.patch(`/catalogo/producto/${productoId}/imagen-principal`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      
-      if (response.status === 200) {
+
+      if (response.status === 200 || response.status === 201) {
         // Actualizar la imagen en el estado local
         const nuevaImagenUrl = response.data.imagen_principal;
         setProductos(prev => 
-          prev.map(p => p.id === productoId ? {...p, imagen_principal: nuevaImagenUrl} : p)
+          prev.map(p => p.id === productoId ? { ...p, imagen_principal: nuevaImagenUrl } : p)
         );
         if (selectedProduct?.id === productoId) {
-          setSelectedProduct(prev => prev ? {...prev, imagen_principal: nuevaImagenUrl} : null);
+          setSelectedProduct(prev => (prev ? { ...prev, imagen_principal: nuevaImagenUrl } : null));
         }
         console.log('✅ Imagen principal actualizada');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al actualizar imagen principal:', error);
-      alert('❌ Error al actualizar la imagen principal');
+      const msg = error?.response?.data?.message || error?.message || 'Error desconocido';
+      alert('❌ Error al actualizar la imagen principal: ' + msg);
     } finally {
       setUploading(false);
     }
@@ -100,31 +121,32 @@ export default function AdminCatalogoVisual() {
     try {
       setUploading(true);
       const formData = new FormData();
-      
+
       Array.from(files).forEach(file => {
         formData.append('imagenes', file);
       });
-      
+
+      // Asegurar envío del token en esta llamada multipart/form-data
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('authToken')) : null;
       const response = await api.post(`/catalogo/producto/${productoId}/imagenes`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      
-      if (response.status === 200) {
+
+      if (response.status === 200 || response.status === 201) {
         // Actualizar las imágenes en el estado local
         const nuevasImagenes = response.data.imagenes;
         setProductos(prev => 
-          prev.map(p => p.id === productoId ? {...p, imagenes: nuevasImagenes} : p)
+          prev.map(p => p.id === productoId ? { ...p, imagenes: nuevasImagenes } : p)
         );
         if (selectedProduct?.id === productoId) {
-          setSelectedProduct(prev => prev ? {...prev, imagenes: nuevasImagenes} : null);
+          setSelectedProduct(prev => (prev ? { ...prev, imagenes: nuevasImagenes } : null));
         }
         console.log('✅ Imágenes agregadas a la galería');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al agregar imágenes:', error);
-      alert('❌ Error al agregar las imágenes');
+      const msg = error?.response?.data?.message || error?.message || 'Error desconocido';
+      alert('❌ Error al agregar las imágenes: ' + msg);
     } finally {
       setUploading(false);
     }
@@ -133,24 +155,28 @@ export default function AdminCatalogoVisual() {
   // Eliminar imagen principal
   const eliminarImagenPrincipal = async (productoId: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar la imagen principal?')) return;
-    
+
     try {
       setUploading(true);
-      const response = await api.delete(`/catalogo/producto/${productoId}/imagen-principal`);
-      
-      if (response.status === 200) {
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('authToken')) : null;
+      const response = await api.delete(`/catalogo/producto/${productoId}/imagen-principal`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+
+      if (response.status === 200 || response.status === 204) {
         // Actualizar el estado local
         setProductos(prev => 
-          prev.map(p => p.id === productoId ? {...p, imagen_principal: null} : p)
+          prev.map(p => p.id === productoId ? { ...p, imagen_principal: null } : p)
         );
         if (selectedProduct?.id === productoId) {
-          setSelectedProduct(prev => prev ? {...prev, imagen_principal: null} : null);
+          setSelectedProduct(prev => (prev ? { ...prev, imagen_principal: null } : null));
         }
         console.log('✅ Imagen principal eliminada');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al eliminar imagen principal:', error);
-      alert('❌ Error al eliminar la imagen principal');
+      const msg = error?.response?.data?.message || error?.message || 'Error desconocido';
+      alert('❌ Error al eliminar la imagen principal: ' + msg);
     } finally {
       setUploading(false);
     }
@@ -159,27 +185,30 @@ export default function AdminCatalogoVisual() {
   // Eliminar imagen de la galería
   const eliminarImagen = async (productoId: string, imagenUrl: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta imagen?')) return;
-    
+
     try {
       setUploading(true);
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('token') || localStorage.getItem('authToken')) : null;
       const response = await api.delete(`/catalogo/producto/${productoId}/imagen`, {
-        data: { imagen_url: imagenUrl }
+        data: { imagen_url: imagenUrl },
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
-      
-      if (response.status === 200) {
+
+      if (response.status === 200 || response.status === 204) {
         // Actualizar el estado local
-        const nuevasImagenes = response.data.imagenes;
+        const nuevasImagenes = response.data?.imagenes ?? [];
         setProductos(prev => 
-          prev.map(p => p.id === productoId ? {...p, imagenes: nuevasImagenes} : p)
+          prev.map(p => p.id === productoId ? { ...p, imagenes: nuevasImagenes } : p)
         );
         if (selectedProduct?.id === productoId) {
-          setSelectedProduct(prev => prev ? {...prev, imagenes: nuevasImagenes} : null);
+          setSelectedProduct(prev => (prev ? { ...prev, imagenes: nuevasImagenes } : null));
         }
         console.log('✅ Imagen eliminada de la galería');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error al eliminar imagen:', error);
-      alert('❌ Error al eliminar la imagen');
+      const msg = error?.response?.data?.message || error?.message || 'Error desconocido';
+      alert('❌ Error al eliminar la imagen: ' + msg);
     } finally {
       setUploading(false);
     }
@@ -188,20 +217,24 @@ export default function AdminCatalogoVisual() {
   // Alternar destacado
   const toggleDestacado = async (productoId: string, destacado: boolean) => {
     try {
-      const response = await api.patch(`/catalogo/producto/${productoId}/destacado`, {
-        destacado: !destacado
+      const formData = new FormData();
+      formData.append('destacado', String(!destacado));
+      const response = await api.put(`/productos/${productoId}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       
       if (response.status === 200) {
         // Actualizar el estado local
         setProductos(prev => 
-          prev.map(p => p.id === productoId ? {...p, destacado: !destacado} : p)
+          prev.map(p => p.id === productoId ? { ...p, destacado: !destacado } : p)
         );
         console.log(`✅ Producto ${!destacado ? 'destacado' : 'no destacado'}`);
       }
-    } catch (error) {
+    } catch (error: any) {
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || error?.message || 'Error desconocido';
       console.error('Error al cambiar destacado:', error);
-      alert('❌ Error al cambiar el estado destacado');
+      alert(`❌ Error al cambiar el estado destacado (${status || 'sin código'}): ${msg}`);
     }
   };
 
@@ -319,7 +352,7 @@ export default function AdminCatalogoVisual() {
   const productosFiltrados = productos.filter(producto => {
     const matchesSearch = producto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          producto.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !selectedCategory || producto.categoria === selectedCategory;
+    const matchesCategory = selectedCategory === '' || selectedCategory === 'todas' || producto.categoria === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -419,14 +452,16 @@ export default function AdminCatalogoVisual() {
             {/* Imagen principal */}
             <div className="relative h-64 bg-gray-100 cursor-pointer"
                  onClick={() => {
-                   const allImages = [producto.imagen_principal, ...(producto.imagenes || [])].filter((img): img is string => Boolean(img));
+                   const allImages = [producto.imagen_principal, ...(producto.imagenes || [])]
+                     .filter((img): img is string => Boolean(img))
+                     .map((u) => resolveImageUrl(u));
                    if (allImages.length > 0) {
                      openImagePreview(allImages, 0);
                    }
                  }}>
               {producto.imagen_principal ? (
                 <img
-                  src={producto.imagen_principal}
+                  src={resolveImageUrl(producto.imagen_principal)}
                   alt={producto.nombre}
                   className="w-full h-full object-cover"
                   onError={(e) => {
@@ -594,15 +629,18 @@ export default function AdminCatalogoVisual() {
                   <button
                     onClick={async () => {
                       try {
-                        const response = await api.patch(`/catalogo/producto/${selectedProduct.id}`, {
-                          nombre: selectedProduct.nombre,
-                          descripcion: selectedProduct.descripcion
+                        const formData = new FormData();
+                        if (selectedProduct.nombre != null) formData.append('nombre', selectedProduct.nombre);
+                        if (selectedProduct.descripcion != null) formData.append('descripcion', selectedProduct.descripcion);
+
+                        const response = await api.put(`/productos/${selectedProduct.id}`, formData, {
+                          headers: { 'Content-Type': 'multipart/form-data' }
                         });
                         
                         if (response.status === 200) {
                           // Actualizar la lista local
                           setProductos(prev => 
-                            prev.map(p => p.id === selectedProduct.id ? {...p, ...selectedProduct} : p)
+                            prev.map(p => p.id === selectedProduct.id ? { ...p, ...selectedProduct } : p)
                           );
                           alert('✅ Información actualizada correctamente');
                         }
@@ -633,7 +671,7 @@ export default function AdminCatalogoVisual() {
                        }}>
                     {selectedProduct.imagen_principal ? (
                       <img
-                        src={selectedProduct.imagen_principal}
+                        src={resolveImageUrl(selectedProduct.imagen_principal)}
                         alt="Principal"
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -720,7 +758,7 @@ export default function AdminCatalogoVisual() {
                         <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 shadow-md cursor-pointer"
                              onClick={() => openImagePreview(selectedProduct?.imagenes || [], index)}>
                           <img
-                            src={imagen}
+                            src={resolveImageUrl(imagen)}
                             alt={`Imagen ${index + 1}`}
                             className="w-full h-full object-cover transition-transform group-hover:scale-105"
                             onError={(e) => {
@@ -884,7 +922,7 @@ export default function AdminCatalogoVisual() {
               {/* Imagen */}
               <div className="flex items-center justify-center max-h-[90vh] overflow-hidden">
                 <img
-                  src={previewImages[currentImageIndex]}
+                  src={resolveImageUrl(previewImages[currentImageIndex])}
                   alt={`Vista previa ${currentImageIndex + 1}`}
                   className="max-w-full max-h-full object-contain transition-transform duration-200"
                   style={{ transform: `scale(${zoomLevel})` }}

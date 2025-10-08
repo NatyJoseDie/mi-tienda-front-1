@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   output: 'standalone',
-  trailingSlash: true,
+  trailingSlash: false,
   images: {
     unoptimized: true,
     remotePatterns: [

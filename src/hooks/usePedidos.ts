@@ -1,9 +1,10 @@
 // src/hooks/usePedidos.ts
 
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { pedidosService, Pedido } from '@/services/pedidos';
 
-export const usePedidos = () => {
+export const usePedidos = (options?: { autoLoad?: boolean }) => {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,15 +17,20 @@ export const usePedidos = () => {
       const pedidosData = await pedidosService.obtenerPedidos();
       setPedidos(pedidosData);
     } catch (error: any) {
+      // Ignorar cancelaciones de axios (por ejemplo, al redirigir a login)
+      if (axios.isCancel?.(error)) {
+        setLoading(false);
+        return;
+      }
       console.error('Error al cargar pedidos:', error);
       setError(error.message || 'Error al cargar pedidos');
       
       // Si es un error de conexión, mostrar mensaje más específico
       if (error.message?.includes('fetch')) {
         setError('No se puede conectar con el servidor. Verifica que el backend esté corriendo.');
-      } else if (error.message?.includes('401')) {
+      } else if (error.message?.includes('401') || error?.response?.status === 401) {
         setError('No tienes permisos para ver los pedidos. Verifica tu autenticación.');
-      } else if (error.message?.includes('404')) {
+      } else if (error.message?.includes('404') || error?.response?.status === 404) {
         setError('El endpoint de pedidos no existe. Verifica la configuración del backend.');
       }
     } finally {
@@ -32,12 +38,12 @@ export const usePedidos = () => {
     }
   };
 
-  const actualizarEstado = async (pedidoId: string, nuevoEstado: string, entregaManual?: boolean) => {
+  const actualizarEstado = async (pedidoId: string, nuevoEstado: string, entregaManual?: boolean, videoFile?: File) => {
     try {
       setActualizandoEstado(pedidoId);
       setError(null);
       
-      await pedidosService.actualizarEstadoPedido(pedidoId, nuevoEstado, entregaManual);
+      await pedidosService.actualizarEstadoPedido(pedidoId, nuevoEstado, entregaManual, videoFile);
       await cargarPedidos(); // Recargar lista
       
       return { success: true, message: `Pedido actualizado a: ${nuevoEstado}` };
@@ -62,9 +68,14 @@ export const usePedidos = () => {
     }
   };
 
+  // Cargar pedidos automáticamente solo cuando se solicite
+  const shouldAutoLoad = options?.autoLoad ?? true;
   useEffect(() => {
-    cargarPedidos();
-  }, []);
+    if (shouldAutoLoad) {
+      cargarPedidos();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shouldAutoLoad]);
 
   return {
     pedidos,

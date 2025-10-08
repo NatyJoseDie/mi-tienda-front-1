@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProductos, crearPedido } from '@/lib/api-client';
 import api from '@/lib/api';
-import axios from 'axios';
 
 interface ProductoRevendedor {
   id: string;
@@ -74,12 +73,7 @@ export default function RevendedorPage() {
     try {
       setLoadingData(true);
       setError('');
-      const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const { data } = await axios.get(`${backendBase}/revendedores/lista-precios`, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const { data } = await api.get('/revendedores/lista-precios');
       const productosData = data.data ?? data;
       setProductos(Array.isArray(productosData) ? productosData : []);
     } catch (error: any) {

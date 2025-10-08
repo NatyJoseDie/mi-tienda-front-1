@@ -9,11 +9,28 @@ export type UserSession = {
 
 const STORAGE_KEY = "mi_tienda_session";
 
+// Normaliza el rol a valores controlados: 'admin' | 'revendedor' | 'user'
+function normalizeRole(raw?: string | null): 'admin' | 'revendedor' | 'user' {
+  if (!raw) return 'user';
+  const r = String(raw).toLowerCase().trim();
+  // Coincidencias exactas o habituales
+  if ([
+    'admin', 'administrator', 'administrador', 'adm', 'root', 'sysadmin', 'superadmin', 'super-admin'
+  ].includes(r)) return 'admin';
+  if ([
+    'revendedor', 'revendedores', 'reseller', 'seller', 'vendedor', 'distribuidor', 'mayorista'
+  ].includes(r)) return 'revendedor';
+  // Coincidencias por patrón comunes del backend (role_admin, admin_role, etc.)
+  if (r.includes('admin')) return 'admin';
+  if (r.includes('resell') || r.includes('revend') || r.includes('seller') || r.includes('vendor')) return 'revendedor';
+  return 'user';
+}
+
 /**
  * Guarda la sesión en localStorage
  */
 export function setSession(token: string, role: string) {
-  const session: UserSession = { token, role };
+  const session: UserSession = { token, role: normalizeRole(role) };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
   localStorage.setItem("token", token); // Para que lo use el interceptor de axios
 }
@@ -24,7 +41,13 @@ export function setSession(token: string, role: string) {
 export function getSession(): UserSession {
   if (typeof window === "undefined") return { token: null, role: null };
   const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : { token: null, role: null };
+  if (!data) return { token: null, role: null };
+  try {
+    const parsed = JSON.parse(data) as UserSession;
+    return { token: parsed.token, role: normalizeRole(parsed.role || undefined) };
+  } catch {
+    return { token: null, role: null };
+  }
 }
 
 /**
@@ -41,14 +64,29 @@ export function clearSession() {
 export async function login(email: string, password: string) {
   try {
     const { data } = await api.post("/auth/login", { email, password });
-    
-    // Guardamos el token en localStorage para reutilizarlo
+
     if (data?.access_token) {
-      setSession(data.access_token, data.role || "user");
+      // Setear token para siguientes requests
       api.defaults.headers.common["Authorization"] = `Bearer ${data.access_token}`;
+
+      // Si el login no trae el rol, lo consultamos al perfil
+      let role: string | undefined = data.role;
+      if (!role) {
+        try {
+          const profileRes = await api.get("/auth/profile");
+          role = profileRes?.data?.role;
+        } catch (e) {
+          // Si falla el perfil, seguimos pero caerá en 'user' por normalización
+          console.warn("No se pudo obtener el rol desde /auth/profile", e);
+        }
+      }
+
+      const normRole = normalizeRole(role);
+      setSession(data.access_token, normRole);
     }
-    
-    return data;
+
+    // Devolver también el rol normalizado para quien lo necesite en el flujo
+    return { ...data, role: normalizeRole(data?.role) };
   } catch (err) {
     console.error("Error en login:", err);
     throw err;

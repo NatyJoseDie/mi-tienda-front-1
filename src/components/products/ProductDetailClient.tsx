@@ -10,6 +10,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Producto } from '@/types/producto';
+import { getSafeImage, resolveImageUrl } from '@/utils/imageUtils';
 import { useCart } from '@/context/CartContext';
 
 interface ProductDetailClientProps {
@@ -18,9 +19,16 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { addToCart } = useCart();
-  const [mainImage, setMainImage] = useState(product.imagen_principal || 'https://placehold.co/600x600.png?text=Sin+Imagen');
+  
+  // Lista de imágenes y estado de índice actual
+  const allImagesRaw = [product.imagen_principal, ...(product.imagenes || [])];
+  const allImages = allImagesRaw.map((u) => getSafeImage(u)).filter(Boolean) as string[];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const mainImage = allImages[currentIndex] || getSafeImage(product.imagen_principal);
 
-  const allImages = [product.imagen_principal, ...(product.imagenes || [])].filter(Boolean) as string[];
+  // Controles visuales
+  const [zoom, setZoom] = useState(0.9); // Permite "achicar" el zoom
+  const [fit, setFit] = useState<'contain' | 'cover'>('contain'); // Mostrar el producto completo por defecto
 
   const handleAddToCart = () => {
     // Solución 1: No se añade 'quantity' aquí. 
@@ -62,24 +70,64 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     alt={product.nombre}
                     width={600}
                     height={600}
-                    className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
+                    className={`h-full w-full object-${fit} object-center transition-transform duration-300`}
+                    style={{ transform: `scale(${zoom})` }}
                     priority
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                {/* Controles: anterior/siguiente */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      aria-label="Imagen anterior"
+                      onClick={() => setCurrentIndex((i) => (i - 1 + allImages.length) % allImages.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 rounded-full p-2 shadow transition"
+                    >
+                      ◀
+                    </button>
+                    <button
+                      aria-label="Imagen siguiente"
+                      onClick={() => setCurrentIndex((i) => (i + 1) % allImages.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white text-gray-800 rounded-full p-2 shadow transition"
+                    >
+                      ▶
+                    </button>
+                  </>
+                )}
+                {/* Controles de zoom/ajuste */}
+                <div className="mt-3 flex items-center gap-3">
+                  <label className="text-sm text-gray-600">Zoom</label>
+                  <input
+                    type="range"
+                    min={0.7}
+                    max={1.3}
+                    step={0.01}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFit((f) => (f === 'contain' ? 'cover' : 'contain'))}
+                    className="ml-2 px-3 py-1 rounded-md border text-sm text-gray-700 hover:bg-gray-100"
+                    title="Cambiar ajuste"
+                  >
+                    {fit === 'contain' ? 'Ajuste: Contener' : 'Ajuste: Recortar'}
+                  </button>
+                </div>
               </div>
               
               {allImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="flex gap-3 overflow-x-auto pb-2">
                   {allImages.map((img, index) => (
                     <div 
                       key={index} 
-                      className={`aspect-square cursor-pointer overflow-hidden rounded-xl transition-all duration-300 hover:scale-105 ${
-                        img === mainImage 
+                      className={`flex-shrink-0 w-20 h-20 cursor-pointer overflow-hidden rounded-xl transition-all duration-300 hover:scale-105 ${
+                        index === currentIndex 
                           ? 'ring-4 ring-indigo-500 shadow-lg' 
                           : 'ring-2 ring-gray-200 hover:ring-indigo-300 shadow-md'
                       }`}
-                      onClick={() => setMainImage(img)}
+                      onClick={() => setCurrentIndex(index)}
                     >
                       <Image
                         src={img}

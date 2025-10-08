@@ -5,6 +5,7 @@ import { useCart } from '@/context/CartContext';
 import Link from 'next/link';
 import Image from 'next/image';
 import { crearPedidoConsumidor } from '@/lib/api-client';
+import { getSafeImage } from '@/utils/imageUtils';
 
 export default function CarritoPage() {
   const { cartItems, removeFromCart, clearCart, totalItems } = useCart();
@@ -93,7 +94,7 @@ export default function CarritoPage() {
             <ul className="divide-y divide-gray-200">
               {cartItems.map((item) => (
                 <li key={item.id} className="flex items-center py-4">
-                  <Image src={item.imagen_principal || 'https://placehold.co/100x100.png'} alt={item.nombre} width={80} height={80} className="rounded-md" />
+                  <Image src={getSafeImage(item.imagen_principal)} alt={item.nombre} width={80} height={80} className="rounded-md" />
                   <div className="ml-4 flex-grow">
                     <h3 className="font-semibold">{item.nombre}</h3>
                     <p className="text-sm text-gray-600">Cantidad: {item.quantity}</p>

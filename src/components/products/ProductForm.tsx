@@ -142,9 +142,9 @@ export default function ProductForm({ initialData = {}, onSubmitAction, onCancel
       // Validación antes de toString()
       formData.append('precio_costo', (precioCosto || 0).toString());
       formData.append('stock', (stock || 0).toString());
-      // En el handleSubmit, enviar categoria_id:
+      // Enviar únicamente el nombre de la categoría según contrato del backend
       formData.append('categoria', categoria);
-      formData.append('categoria_id', categoriaId);
+      // formData.append('categoria_id', categoriaId); // Eliminado: el backend no lo admite
       
       // Solo enviar SKU si estamos editando un producto existente
       if (initialData.id && initialData.sku) {

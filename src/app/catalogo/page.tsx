@@ -7,6 +7,7 @@ import ProductCard from '@/components/products/ProductCard';
 import { Producto } from '@/types/producto';
 import { motion, useScroll, useTransform, useInView } from 'framer-motion';
 import { SparklesIcon, FireIcon, StarIcon, MagnifyingGlassIcon, FunnelIcon } from '@heroicons/react/24/solid';
+import { getSafeImage } from '@/utils/imageUtils';
 
 // --- Componente de Carrusel Moderno con Imágenes Superpuestas ---
 const ModernCarousel: React.FC<{ productos: Producto[] }> = ({ productos }) => {
@@ -34,18 +35,21 @@ const ModernCarousel: React.FC<{ productos: Producto[] }> = ({ productos }) => {
     setCurrentIndex(index);
   };
 
+  // Normaliza posibles duplicaciones de '/product-images/' en URLs provenientes de Supabase Storage
+  const normalizeSupabaseImageUrl = (url: string) => {
+    if (!url) return '';
+    return url.replace(/\/product-images\/(?:product-images\/)+/g, '/product-images/').trim();
+  };
+
   const getImageUrl = (producto: Producto) => {
     if (!producto.imagen_principal) {
-      return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop&q=80';
+      return '/placeholder.jpg';
     }
-    // Si la imagen es de placehold.co, usar una imagen de Unsplash por defecto
+    // Si la imagen es de placehold.co, usar placeholder local por defecto
     if (producto.imagen_principal.includes('placehold.co')) {
-      return 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop&q=80';
+      return '/placeholder.jpg';
     }
-    return producto.imagen_principal.replace(
-      '/product-images/product-images/',
-      '/product-images/'
-    );
+    return normalizeSupabaseImageUrl(producto.imagen_principal);
   };
 
   return (
@@ -119,7 +123,7 @@ const ModernCarousel: React.FC<{ productos: Producto[] }> = ({ productos }) => {
               >
                 <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white/20 backdrop-blur-sm">
                   <Image
-                    src={getImageUrl(producto)}
+                    src={getSafeImage(producto.imagen_principal)}
                     alt={producto.nombre}
                     fill
                     className="object-cover"
@@ -410,7 +414,17 @@ export default function CatalogoPage() {
 
       } catch (err: any) {
         console.error("Error fetching products:", err);
-        // Usar datos de prueba cuando falle la conexión
+        // En producción no usar datos de demostración a menos que se permita explícitamente
+        const allowDemoFallback = process.env.NEXT_PUBLIC_ALLOW_DEMO_FALLBACK === 'true';
+        if (!allowDemoFallback) {
+          setFeaturedProducts([]);
+          setRegularProducts([]);
+          setProductsByCategory({});
+          setError('No se pudo conectar al servidor. Por favor, intenta nuevamente en unos segundos.');
+          setLoading(false);
+          return;
+        }
+        // Fallback de demostración opcional
         const mockProducts: Producto[] = [
           {
             id: '1',

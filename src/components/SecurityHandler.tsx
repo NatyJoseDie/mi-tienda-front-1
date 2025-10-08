@@ -328,7 +328,17 @@ export const useSecurityHandler = () => {
 
     // Detectar diferentes tipos de errores basados en el mensaje o código
     const message = apiError.message || apiError.error || 'Error de seguridad';
-    const code = apiError.code || apiError.status;
+    const code = apiError.code || apiError.status || apiError.response?.status;
+    
+    // Manejar errores de red específicamente
+    if (message.includes('Network Error') || message.includes('fetch') || code === 'NETWORK_ERROR') {
+      return {
+        type: 'suspicious_activity',
+        message: 'Error de conexión con el servidor',
+        details: 'Verifica tu conexión a internet o intenta nuevamente en unos momentos',
+        retryAfter: 30,
+      };
+    }
 
     if (message.includes('rate limit') || code === 429) {
       return {
