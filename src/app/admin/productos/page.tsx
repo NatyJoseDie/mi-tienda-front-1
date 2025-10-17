@@ -267,12 +267,52 @@ export default function AdminProductos() {
     }
   };
 
-  const handleDownloadExcel = () => {
-    console.log('Descargar Excel');
+  const handleDownloadExcel = async () => {
+    try {
+      const { default: api } = await import('@/lib/api');
+      const res = await api.get('/catalogo/descargar/excel', {
+        responseType: 'blob',
+        headers: {
+          Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
+      });
+      const blob = new Blob([res.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `catalogo_${new Date().toISOString().slice(0,10)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('No se pudo descargar el Excel: ' + (err?.response?.data?.message || err?.message || 'Error desconocido'));
+      console.error('Error descargando Excel', err);
+    }
   };
 
-  const handleDownloadPDF = () => {
-    console.log('Descargar PDF');
+  const handleDownloadPDF = async () => {
+    try {
+      const { default: api } = await import('@/lib/api');
+      const res = await api.get('/catalogo/descargar/pdf', {
+        responseType: 'blob',
+        headers: { Accept: 'application/pdf' }
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `catalogo_${new Date().toISOString().slice(0,10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('No se pudo descargar el PDF: ' + (err?.response?.data?.message || err?.message || 'Error desconocido'));
+      console.error('Error descargando PDF', err);
+    }
   };
 
   return (

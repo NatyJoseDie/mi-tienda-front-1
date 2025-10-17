@@ -103,10 +103,29 @@ export async function getPedidos() {
  */
 export async function crearPedidoConsumidor(pedidoData: any) {
   try {
-    const res = await api.post("/usuarios/pedido-consumidor", pedidoData);
+    const items = pedidoData.items ?? (pedidoData.productos
+      ? pedidoData.productos.map((p: any) => ({
+          producto_id: p.producto_id ?? p.id,
+          cantidad: p.cantidad ?? p.quantity ?? 1,
+        }))
+      : []);
+
+    const payload = {
+      nombre: pedidoData.nombre,
+      email: pedidoData.email,
+      telefono: pedidoData.telefono,
+      direccion: pedidoData.direccion,
+      items,
+    };
+
+    const res = await api.post("/usuarios/pedido-consumidor", payload, { timeout: 10000 });
     return res.data;
-  } catch (err) {
-    console.error("Error al crear pedido de consumidor:", err);
+  } catch (err: any) {
+    console.error("Error al crear pedido de consumidor:", {
+      status: err?.response?.status,
+      data: err?.response?.data,
+      message: err?.message,
+    });
     throw err;
   }
 }

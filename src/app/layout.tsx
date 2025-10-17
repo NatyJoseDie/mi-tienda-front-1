@@ -4,6 +4,7 @@ import './globals.css';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import { CartProvider } from '@/context/CartContext';
+import BackendWake from '@/components/layout/BackendWake';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-gray-50 text-gray-900 antialiased`}>
         <CartProvider>
           <div className="flex min-h-screen flex-col">
+            <BackendWake />
             <Header />
             <main className="flex-grow container mx-auto p-4 sm:p-6">
               {children}

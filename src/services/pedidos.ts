@@ -46,28 +46,8 @@ export class PedidosService {
     }
   }
 
-  async actualizarEstadoPedido(
-    pedidoId: string,
-    nuevoEstado: string,
-    entregaManual?: boolean,
-    videoFile?: File
-  ): Promise<void> {
+  async actualizarEstadoPedido(pedidoId: string, nuevoEstado: string, entregaManual?: boolean): Promise<void> {
     try {
-      // Si se adjunta video, el backend solo lo procesa cuando estado === 'enviado' y requiere PUT multipart
-      if (videoFile) {
-        const form = new FormData();
-        form.append('estado', 'enviado');
-        if (entregaManual) {
-          form.append('entrega_manual', 'false');
-          if (entregaManual === true) form.set('entrega_manual', 'true');
-        }
-        form.append('video', videoFile);
-
-        await api.put(`/productos/admin/pedidos/${pedidoId}/estado`, form);
-        return;
-      }
-
-      // Caso normal (sin video): JSON por PATCH
       const body: any = { estado: nuevoEstado };
       if (entregaManual) {
         body.entrega_manual = true;

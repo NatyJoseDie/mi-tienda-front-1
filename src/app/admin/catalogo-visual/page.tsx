@@ -217,31 +217,28 @@ export default function AdminCatalogoVisual() {
   // Alternar destacado
   const toggleDestacado = async (productoId: string, destacado: boolean) => {
     try {
-      const formData = new FormData();
-      formData.append('destacado', String(!destacado));
-      const response = await api.put(`/productos/${productoId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const response = await api.patch(`/catalogo/producto/${productoId}/destacado`, {
+        destacado: !destacado
       });
       
       if (response.status === 200) {
         // Actualizar el estado local
         setProductos(prev => 
-          prev.map(p => p.id === productoId ? { ...p, destacado: !destacado } : p)
+          prev.map(p => p.id === productoId ? {...p, destacado: !destacado} : p)
         );
         console.log(`✅ Producto ${!destacado ? 'destacado' : 'no destacado'}`);
       }
-    } catch (error: any) {
-      const status = error?.response?.status;
-      const msg = error?.response?.data?.message || error?.message || 'Error desconocido';
+    } catch (error) {
       console.error('Error al cambiar destacado:', error);
-      alert(`❌ Error al cambiar el estado destacado (${status || 'sin código'}): ${msg}`);
+      alert('❌ Error al cambiar el estado destacado');
     }
   };
 
   // Descargar catálogo PDF
   const descargarCatalogoPDF = async () => {
     try {
-      const response = await api.get('/catalogo/descargar-pdf', {
+      // Endpoint correcto según swagger: /catalogo/descargar/pdf
+      const response = await api.get('/catalogo/descargar/pdf', {
         responseType: 'blob'
       });
       
@@ -629,18 +626,15 @@ export default function AdminCatalogoVisual() {
                   <button
                     onClick={async () => {
                       try {
-                        const formData = new FormData();
-                        if (selectedProduct.nombre != null) formData.append('nombre', selectedProduct.nombre);
-                        if (selectedProduct.descripcion != null) formData.append('descripcion', selectedProduct.descripcion);
-
-                        const response = await api.put(`/productos/${selectedProduct.id}`, formData, {
-                          headers: { 'Content-Type': 'multipart/form-data' }
+                        const response = await api.patch(`/catalogo/producto/${selectedProduct.id}`, {
+                          nombre: selectedProduct.nombre,
+                          descripcion: selectedProduct.descripcion
                         });
                         
                         if (response.status === 200) {
                           // Actualizar la lista local
                           setProductos(prev => 
-                            prev.map(p => p.id === selectedProduct.id ? { ...p, ...selectedProduct } : p)
+                            prev.map(p => p.id === selectedProduct.id ? {...p, ...selectedProduct} : p)
                           );
                           alert('✅ Información actualizada correctamente');
                         }

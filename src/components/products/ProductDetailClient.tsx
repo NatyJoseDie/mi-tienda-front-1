@@ -19,20 +19,16 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ product }: ProductDetailClientProps) {
   const { addToCart } = useCart();
-  
-  // Lista de imágenes y estado de índice actual
+
+  // Galería y estado de imagen principal (con índice)
   const allImagesRaw = [product.imagen_principal, ...(product.imagenes || [])];
   const allImages = allImagesRaw.map((u) => getSafeImage(u)).filter(Boolean) as string[];
   const [currentIndex, setCurrentIndex] = useState(0);
   const mainImage = allImages[currentIndex] || getSafeImage(product.imagen_principal);
-
-  // Controles visuales
-  const [zoom, setZoom] = useState(0.9); // Permite "achicar" el zoom
-  const [fit, setFit] = useState<'contain' | 'cover'>('contain'); // Mostrar el producto completo por defecto
+  const [zoom, setZoom] = useState(0.9);
+  const [fit, setFit] = useState<'contain' | 'cover'>('contain');
 
   const handleAddToCart = () => {
-    // Solución 1: No se añade 'quantity' aquí. 
-    // La lógica de la cantidad la debe manejar el contexto del carrito.
     addToCart(product);
     alert(`${product.nombre} ha sido añadido al carrito.`);
   };
@@ -95,6 +91,7 @@ export default function ProductDetailClient({ product }: ProductDetailClientProp
                     </button>
                   </>
                 )}
+
                 {/* Controles de zoom/ajuste */}
                 <div className="mt-3 flex items-center gap-3">
                   <label className="text-sm text-gray-600">Zoom</label>
