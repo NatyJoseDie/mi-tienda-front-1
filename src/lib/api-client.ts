@@ -1,5 +1,6 @@
 // src/lib/api-client.ts
 import api from "./api";
+import { getSession } from './auth';
 
 // ----- PRODUCTOS -----
 
@@ -106,7 +107,9 @@ export async function crearPedidoConsumidor(pedidoData: any) {
     const items = pedidoData.items ?? (pedidoData.productos
       ? pedidoData.productos.map((p: any) => ({
           producto_id: p.producto_id ?? p.id,
+          nombre: p.nombre ?? p.name,
           cantidad: p.cantidad ?? p.quantity ?? 1,
+          precio_unitario: p.precio_unitario ?? p.precio_final ?? p.price ?? 0,
         }))
       : []);
 
@@ -116,6 +119,7 @@ export async function crearPedidoConsumidor(pedidoData: any) {
       telefono: pedidoData.telefono,
       direccion: pedidoData.direccion,
       items,
+      total: pedidoData.total ?? undefined,
     };
 
     const res = await api.post("/usuarios/pedido-consumidor", payload, { timeout: 10000 });
@@ -125,7 +129,46 @@ export async function crearPedidoConsumidor(pedidoData: any) {
       status: err?.response?.status,
       data: err?.response?.data,
       message: err?.message,
+      code: err?.code,
     });
+
+    const isTimeoutOrNetwork = err?.code === 'ECONNABORTED' || err?.message?.includes('timeout') || !err?.response;
+    const session = getSession();
+    const isRevendedor = !!session?.token && session?.role === 'revendedor';
+
+    // Solo usar fallback de revendedor si el usuario está logueado como revendedor
+    if (isTimeoutOrNetwork && isRevendedor) {
+      try {
+        const fallbackPayload = {
+          nombre: pedidoData.nombre,
+          email: pedidoData.email,
+          telefono: pedidoData.telefono,
+          direccion: pedidoData.direccion,
+          productos: pedidoData.productos ?? (pedidoData.items
+            ? pedidoData.items.map((it: any) => ({
+                producto_id: it.producto_id,
+                cantidad: it.cantidad,
+                precio_unitario: it.precio_unitario ?? 0,
+              }))
+            : []),
+          total: pedidoData.total ?? undefined,
+        };
+
+        const resFallback = await api.post('/revendedores/pedido', fallbackPayload, { timeout: 10000 });
+        console.warn('Pedido consumidor (usuario revendedor) registrado por fallback en /revendedores/pedido');
+        return resFallback.data;
+      } catch (fallbackErr: any) {
+        console.error('Fallback a /revendedores/pedido también falló:', {
+          status: fallbackErr?.response?.status,
+          data: fallbackErr?.response?.data,
+          message: fallbackErr?.message,
+          code: fallbackErr?.code,
+        });
+        throw fallbackErr;
+      }
+    }
+
+    // Si no es revendedor o no es timeout/network, relanzar error original
     throw err;
   }
 }

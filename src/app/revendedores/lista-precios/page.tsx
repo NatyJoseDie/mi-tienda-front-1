@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProductos, crearPedido } from '@/lib/api-client';
 import api from '@/lib/api';
+import { getSession } from '@/lib/auth';
 
 interface ProductoRevendedor {
   id: string;
@@ -184,6 +185,14 @@ export default function RevendedorPage() {
   };
 
   const enviarPedido = async () => {
+    // Requiere login como revendedor
+    const session = getSession();
+    if (!session.token || session.role !== 'revendedor') {
+      alert('Debes iniciar sesión como revendedor para enviar pedidos.');
+      router.push('/login');
+      return;
+    }
+
     if (carrito.length === 0) {
       alert('El carrito está vacío');
       return;
@@ -211,8 +220,6 @@ export default function RevendedorPage() {
       const { data: result } = await api.post('/revendedores/pedido', pedidoData);
 
       alert('Pedido enviado correctamente. Recibirás un email de confirmación.');
-      
-      // Limpiar carrito y datos
       setCarrito([]);
       setDatosRevendedor({ nombre: '', email: '', telefono: '', direccion: '' });
       setVista('inicio');

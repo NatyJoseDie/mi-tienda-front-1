@@ -18,6 +18,7 @@ export default function CarritoPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [pedidoId, setPedidoId] = useState<string | null>(null);
 
   const total = cartItems.reduce((acc, item) => acc + (item.precio_final || 0) * item.quantity, 0);
 
@@ -37,7 +38,7 @@ export default function CarritoPage() {
 
     const pedido = {
       ...formData,
-      productos: cartItems.map(item => ({
+      items: cartItems.map(item => ({
         producto_id: item.id,
         nombre: item.nombre,
         cantidad: item.quantity,
@@ -47,17 +48,17 @@ export default function CarritoPage() {
     };
 
     try {
-      await crearPedidoConsumidor(pedido);
-
+      const data = await crearPedidoConsumidor(pedido);
+      setPedidoId(data?.id ?? null);
       setSuccess(true);
       clearCart();
-    } catch (err: unknown) {
-      // Type guard para obtener el mensaje de error
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Hubo un error inesperado.');
-      }
+    } catch (err: any) {
+      const isTimeout = err?.code === 'ECONNABORTED' || (typeof err?.message === 'string' && err.message.toLowerCase().includes('timeout'));
+      const backendMsg = err?.response?.data?.mensaje || err?.response?.data?.error;
+      const userMsg = isTimeout
+        ? 'El servidor tardó demasiado en responder. Intentá nuevamente en unos minutos.'
+        : backendMsg || (err?.message ? String(err.message) : 'Ocurrió un error al finalizar el pedido.');
+      setError(userMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -68,7 +69,9 @@ export default function CarritoPage() {
       <div className="container mx-auto text-center py-20">
         <h1 className="text-3xl font-bold text-green-600">¡Pedido realizado con éxito!</h1>
         <p className="mt-4 text-lg">Gracias por tu compra, {formData.nombre}.</p>
-        <p>Hemos enviado un correo a <strong>{formData.email}</strong> con los detalles de tu pedido y el enlace de pago.</p>
+        {pedidoId && <p className="mt-2">ID de tu pedido: <strong>{pedidoId}</strong></p>}
+        <p className="mt-2">Te contactaremos a <strong>{formData.email}</strong> con los detalles de tu pedido.</p>
+        <p className="mt-1 text-sm text-gray-600">Si no ves el correo, revisá Spam. Guardá tu ID para seguimiento.</p>
         <Link href="/productos" className="mt-8 inline-block bg-indigo-600 text-white px-6 py-3 rounded-md hover:bg-indigo-700">
           Seguir comprando
         </Link>

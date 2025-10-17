@@ -2,7 +2,10 @@
 import axios from "axios";
 
 // Obtener la URL del backend configurada o usar Render por defecto
-const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL || "https://mi-tienda-backend-o9i7.onrender.com";
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL 
+  || process.env.NEXT_PUBLIC_BACKEND_URL 
+  || process.env.BACKEND_URL 
+  || "https://mi-tienda-backend-o9i7.onrender.com";
 // URL de respaldo (Render) si la principal no funciona
 const fallbackApiUrl = "https://mi-tienda-backend-o9i7.onrender.com";
 
