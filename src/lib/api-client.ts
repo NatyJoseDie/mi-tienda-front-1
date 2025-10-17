@@ -103,26 +103,27 @@ export async function getPedidos() {
  * Crear pedido de consumidor final
  */
 export async function crearPedidoConsumidor(pedidoData: any) {
+  // Preparar payload compatible con backend
+  const items = pedidoData.items ?? (pedidoData.productos
+    ? pedidoData.productos.map((p: any) => ({
+        producto_id: p.producto_id ?? p.id,
+        nombre: p.nombre ?? p.name,
+        cantidad: p.cantidad ?? p.quantity ?? 1,
+        precio_unitario: p.precio_unitario ?? p.precio_final ?? p.price ?? 0,
+      }))
+    : []);
+
+  const payload = {
+    nombre: pedidoData.nombre,
+    email: pedidoData.email,
+    telefono: pedidoData.telefono,
+    direccion: pedidoData.direccion,
+    items,
+    total: pedidoData.total ?? undefined,
+  };
+
   try {
-    const items = pedidoData.items ?? (pedidoData.productos
-      ? pedidoData.productos.map((p: any) => ({
-          producto_id: p.producto_id ?? p.id,
-          nombre: p.nombre ?? p.name,
-          cantidad: p.cantidad ?? p.quantity ?? 1,
-          precio_unitario: p.precio_unitario ?? p.precio_final ?? p.price ?? 0,
-        }))
-      : []);
-
-    const payload = {
-      nombre: pedidoData.nombre,
-      email: pedidoData.email,
-      telefono: pedidoData.telefono,
-      direccion: pedidoData.direccion,
-      items,
-      total: pedidoData.total ?? undefined,
-    };
-
-    const res = await api.post("/usuarios/pedido-consumidor", payload, { timeout: 10000 });
+    const res = await api.post("/usuarios/pedido-consumidor", payload, { timeout: 30000 });
     return res.data;
   } catch (err: any) {
     console.error("Error al crear pedido de consumidor:", {
@@ -132,7 +133,25 @@ export async function crearPedidoConsumidor(pedidoData: any) {
       code: err?.code,
     });
 
-    const isTimeoutOrNetwork = err?.code === 'ECONNABORTED' || err?.message?.includes('timeout') || !err?.response;
+    const isTimeoutOrNetwork = err?.code === 'ECONNABORTED' || /timeout/i.test(String(err?.message)) || !err?.response;
+
+    // Reintento automático una vez tras timeout/network
+    if (isTimeoutOrNetwork) {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const resRetry = await api.post("/usuarios/pedido-consumidor", payload, { timeout: 30000 });
+        console.warn('Reintento de pedido consumidor exitoso tras timeout/network');
+        return resRetry.data;
+      } catch (retryErr: any) {
+        console.error('Reintento de pedido consumidor falló:', {
+          status: retryErr?.response?.status,
+          data: retryErr?.response?.data,
+          message: retryErr?.message,
+          code: retryErr?.code,
+        });
+      }
+    }
+
     const session = getSession();
     const isRevendedor = !!session?.token && session?.role === 'revendedor';
 
@@ -154,7 +173,7 @@ export async function crearPedidoConsumidor(pedidoData: any) {
           total: pedidoData.total ?? undefined,
         };
 
-        const resFallback = await api.post('/revendedores/pedido', fallbackPayload, { timeout: 10000 });
+        const resFallback = await api.post('/revendedores/pedido', fallbackPayload, { timeout: 30000 });
         console.warn('Pedido consumidor (usuario revendedor) registrado por fallback en /revendedores/pedido');
         return resFallback.data;
       } catch (fallbackErr: any) {
