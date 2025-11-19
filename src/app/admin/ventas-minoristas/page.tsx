@@ -217,29 +217,44 @@ export default function AdminVentasMinoristas() {
         await mockAPI.registrarVenta(ventaData);
         alert(`Venta registrada exitosamente con ${carritoProductos.length} producto(s) (Modo Demo)`);
       } else {
-        // Usar backend real
-        for (const item of carritoProductos) {
-          const ventaData = {
-            producto_id: item.producto.id,
-            cantidad: item.cantidad,
-            precio_venta: item.precio_venta,
-            nombre_comprador: nombreComprador,
-            metodo_pago: metodoPago || 'No especificado',
-            notas: notas || '',
-            factura: requiereFactura
-          };
+        const productosPayload = carritoProductos
+          .map((item) => ({ id: item.producto?.id, cantidad: item.cantidad }))
+          .filter((p) => p.id && p.cantidad > 0);
 
-          await api.post(`/ventas/minoristas`, ventaData);
+        if (productosPayload.length === 0) {
+          alert('No hay productos válidos para registrar');
+          setLoading(false);
+          return;
         }
 
+        const metodo = (metodoPago || '').toLowerCase();
+        let metodo_pago: string = '';
+        if (metodo.includes('efect')) metodo_pago = 'efectivo';
+        else if (metodo.includes('trans')) metodo_pago = 'transferencia';
+        else if (metodo.includes('tarjeta')) metodo_pago = 'tarjeta';
+        else if (metodo.includes('mercado')) metodo_pago = 'mercadopago';
+
+        if (!metodo_pago) {
+          alert('Selecciona un método de pago válido');
+          setLoading(false);
+          return;
+        }
+
+        const body = {
+          productos: productosPayload,
+          metodo_pago,
+          cliente: nombreComprador || undefined,
+          notas: notas || undefined,
+        };
+
+        await api.post(`/ventas/minoristas`, body);
+
         alert(`Venta registrada exitosamente con ${carritoProductos.length} producto(s) (Backend)`);
-        // Limpiar formulario
         setCarritoProductos([]);
         setNombreComprador('');
         setMetodoPago('');
         setNotas('');
         setRequiereFactura(false);
-        // Recargar ventas
         await cargarVentas();
       }
     } catch (error: any) {
