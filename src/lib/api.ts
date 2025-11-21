@@ -1,13 +1,10 @@
 // src/lib/api.ts
 import axios from "axios";
 
-// Obtener la URL del backend configurada o usar Render por defecto
-const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL 
-  || process.env.NEXT_PUBLIC_BACKEND_URL 
-  || process.env.BACKEND_URL 
-  || "https://mi-tienda-backend-o9i7.onrender.com";
+// Obtener la URL del backend configurada o usar localhost por defecto
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 // URL de respaldo (Render) si la principal no funciona
-const fallbackApiUrl = "https://mi-tienda-backend-o9i7.onrender.com";
+const fallbackApiUrl = "https://mi-tienda-backend-09i7.onrender.com";
 
 // Verificar si estamos en desarrollo (puerto 3001)
 const isDevelopment = typeof window !== 'undefined' && window.location.port === '3001';

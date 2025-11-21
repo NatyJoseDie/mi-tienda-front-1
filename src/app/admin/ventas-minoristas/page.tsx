@@ -46,7 +46,7 @@ export default function AdminVentasMinoristas() {
     ganancia: number;
   }>>([]);
   const [nombreComprador, setNombreComprador] = useState('');
-  const [metodoPago, setMetodoPago] = useState('');
+  const [metodoPago, setMetodoPago] = useState('Efectivo');
   const [notas, setNotas] = useState('');
   const [requiereFactura, setRequiereFactura] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -219,7 +219,7 @@ export default function AdminVentasMinoristas() {
       } else {
         const productosPayload = carritoProductos
           .map((item) => ({ id: item.producto?.id, cantidad: item.cantidad }))
-          .filter((p) => p.id && p.cantidad > 0);
+          .filter((p) => typeof p.id === 'string' && p.id.trim() !== '' && p.cantidad > 0);
 
         if (productosPayload.length === 0) {
           alert('No hay productos válidos para registrar');
@@ -246,7 +246,9 @@ export default function AdminVentasMinoristas() {
           cliente: nombreComprador || undefined,
           notas: notas || undefined,
         };
-
+        console.log('Payload a enviar:', body);
+        console.log('productosPayload:', productosPayload);
+        console.log('metodo_pago normalizado:', metodo_pago);
         await api.post(`/ventas/minoristas`, body);
 
         alert(`Venta registrada exitosamente con ${carritoProductos.length} producto(s) (Backend)`);
@@ -258,8 +260,16 @@ export default function AdminVentasMinoristas() {
         await cargarVentas();
       }
     } catch (error: any) {
-      console.error('Error al registrar venta:', error);
-      alert(error.message || 'Ocurrió un error al registrar la venta');
+      const status = error?.response?.status;
+      const data = error?.response?.data;
+      console.error('Error al registrar venta:', status, data, error);
+      const msg =
+        (typeof data === 'string' && data) ||
+        data?.message ||
+        (data ? JSON.stringify(data) : '') ||
+        error.message ||
+        'Ocurrió un error al registrar la venta';
+      alert(`Error ${status ?? ''} ${msg}`.trim());
     } finally {
       setLoading(false);
     }
@@ -483,12 +493,11 @@ export default function AdminVentasMinoristas() {
                 onChange={(e) => setMetodoPago(e.target.value)}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                <option value="">Seleccionar método</option>
                 <option value="Efectivo">Efectivo</option>
                 <option value="Tarjeta de Débito">Tarjeta de Débito</option>
                 <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
                 <option value="Transferencia">Transferencia</option>
-                <option value="Otro">Otro</option>
+                <option value="MercadoPago">MercadoPago</option>
               </select>
             </div>
           </div>
